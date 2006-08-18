@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <libgen.h>
 #include "multi_thread.h"
+#include "util.h"
 
 /* Work Pool of Threads */
 pthread_t *thread_pool = NULL;
@@ -33,17 +34,20 @@ int q_avail = 0;
 const char *CLASS_NM = "multi_thread.c";
 
 /* Private functions */
-void lock_queue();
-void unlock_queue();
-void lock_stop();
-void unlock_stop();
-int _get_queue_size();
-void _set_queue_size(int size);
+void  lock_queue();
+void  unlock_queue();
+void  lock_stop();
+void  unlock_stop();
+int   _get_queue_size();
+void  _set_queue_size(int size);
 void* _get_queue_ptr();
-void _set_queue_ptr(int pos);
-void _set_queue_unavailable();
-void _set_queue_available();
-int _is_queue_available();
+void  _set_queue_ptr(int pos);
+void  _set_queue_unavailable();
+void  _set_queue_available();
+int   _is_queue_available();
+void* _next_queue_element();
+void  _increment_queue_ptr(int);
+
 
 
 /******************************************************************************/
@@ -60,7 +64,7 @@ int _is_queue_available();
 void create_threads(void *(*func_ptr)(void *), void *parameter, int num_threads){
   int status;
   int thread_num;
-  const char *METHOD_NM = "create_with_parameter(): ";
+  const char *METHOD_NM = "create_threads: ";
 
   pool_size = num_threads;
 
@@ -69,7 +73,7 @@ void create_threads(void *(*func_ptr)(void *), void *parameter, int num_threads)
 
   if(thread_pool == NULL){
     printf("*** FATAL_ERROR: %s Could not create threads! ***\n", METHOD_NM);
-    exit(1);
+    exit(ERROR_CODE_MALLOC);
   }
 
   /* Initalize local mutex variables */
@@ -102,6 +106,7 @@ void join_threads(int *t_status){
   int status = 0;
   void *ret_value = 0;
   int will_check_status = 1;
+  const char *METHOD_NM = "join_threads: ";
 
   if(t_status == NULL){
     will_check_status = 0;
@@ -127,14 +132,12 @@ void join_threads(int *t_status){
       check_status( status, "pthread_join", "bad status");
     }
 
-    if(((int) ret_value ) != 10 ){
-      printf("Worker %d stopped, return value [%d] DOES NOT EQUAL  worker_num [%d]\n", i + 1, (int)ret_value, 10);
-    }
+    /* check return value? */
   }
 
   printf("Threads Stopped Successfully\n");
 
-  if(thread_pool){ free(thread_pool); thread_pool = NULL; }
+  FREE(thread_pool);
 
   destroy_all_mutexes();
 
@@ -158,7 +161,7 @@ void check_status(int status, char *api, char *msg) {
       printf( ": %s", msg );
     printf( " (status = %d, errno = %d)\n", status, _errno );
     exit( 1 );
-  }  
+  }
 } /* check_status */
 
 /*****************************************************************************/
@@ -173,6 +176,7 @@ int timed_wait(int wait_secs){
   int rc;
   struct timespec   ts;
   struct timeval    tp;
+  const char *METHOD_NM = "timed_wait: ";
 
   memset(&tp,0,sizeof(tp));
 
@@ -181,14 +185,14 @@ int timed_wait(int wait_secs){
 
   rc = gettimeofday(&tp, NULL);
   if(rc){
-    printf("gettimeofday failed in WorkPool_timedWait");
+    printf("%s gettimeofday failed in timed_wait", METHOD_NM);
     return rc;
   }
 
   /* Lock Mutex */
   int status = pthread_mutex_lock( &timed_wait_mutex);
   check_status( status, "pthread_mutex_lock", "bad status (timed_wait_mutex)");
-  
+
   /* Get time in seconds */
   ts.tv_sec  = tp.tv_sec;
   ts.tv_nsec = tp.tv_usec * 1000;
@@ -222,6 +226,11 @@ int timed_wait_milli(int wait_secs){
   int rc;
   struct timespec   ts;
   struct timeval    tp;
+  const char *METHOD_NM = "timed_wait_milli: ";
+
+  if(wait_secs <= 0){
+      return 0;
+  }
 
   memset(&tp,0,sizeof(tp));
   memset(&ts,0,sizeof(ts));
@@ -231,14 +240,14 @@ int timed_wait_milli(int wait_secs){
 
   rc = gettimeofday(&tp, NULL);
   if(rc){
-    printf("gettimeofday failed in WorkPool_timedWait");
+    printf("%s gettimeofday failed", METHOD_NM);
     return rc;
   }
 
   /* Lock Mutex */
   int status = pthread_mutex_lock( &timed_wait_mutex);
   check_status( status, "pthread_mutex_lock", "bad status (timed_wait_mutex)");
-  
+
   /* Get time in milliseconds */
   /* convert milli to nano */
   wait_secs *= 1000000;
@@ -263,6 +272,8 @@ int timed_wait_milli(int wait_secs){
 }/* end timed_wait */
 
 /*****************************************************************************/
+/* Blocks all unix signals to the thread that calls it.                      */
+/* Be sure and create a signal handler before this is called.                */
 /*****************************************************************************/
 int block_all_signals(){
 
@@ -275,6 +286,8 @@ int block_all_signals(){
 }
 
 /*****************************************************************************/
+/* Creates a single thread signal handler to handle all interrupt signals    */
+/* for all threads.                                                          */
 /*****************************************************************************/
 int signal_handler_create(void *arg){
   int rc =0;
@@ -287,26 +300,33 @@ int signal_handler_create(void *arg){
 /*****************************************************************************/
 /*****************************************************************************/
 void *signal_handler_function(void *functions){
+  const char *METHOD_NM = "signal_handler_function: ";
   FUNCTION_PTRS function_ptrs;
   sigset_t signals;
   int rc = 0;
   int sig_caught;
   int still_running = 1;
-  void *(*term_func_ptr)(void *) = (void *)term_func;
-  void *(*user1_func_ptr)(void *) = (void *)user_func1;
-  void *(*user2_func_ptr)(void *) = (void *)user_func2;
+  void *(*term_func_ptr)(void *) = (void *)(functions->term_func);
+  void *(*user1_func_ptr)(void *) = (void *)(functions->user_func1);
+  void *(*user2_func_ptr)(void *) = (void *)(functions->user_func2);
   /* FUNC_PTR fun_ptr = (FUNC_PTR)arg; */
-   
+
   sigfillset(&signals);
   while(still_running){
     rc = sigwait(&signals, &sigcaught);
     switch(sig_caught){
       case SIGTERM:
         term_func_ptr();
-	still_running = 0;
-	break;
+	    still_running = 0;
+	    break;
+      case SIGUSER1:
+        user_func1();
+        break;
+      case SIGUSER2:
+        user_func2();
+        break;
       default:
-	printf("signal_handler: Caught Signal [%d], Not Stopping.\n", sig_caught);
+	printf("%s Caught Signal [%d], Not Stopping.\n", METHOD_NM, sig_caught);
 	break;
     } /* end switch */
   } /* end while(still_running) */
@@ -375,7 +395,7 @@ int get_queue_size(){
   unlock_queue();
 
   return size;
-}  
+}
 
 void set_queue_size(int size){
   lock_queue();
@@ -408,7 +428,7 @@ void* next_queue_element(){
   unlock_queue();
 
   return element;
-}  
+}
 
 int is_queue_available(){
   int avail = 0;
@@ -498,6 +518,30 @@ void* _get_queue_ptr(){
 void _set_queue_ptr(int pos){
   q_ptr = queue;
   q_ptr += sizeof(*q_ptr)*pos;
+}
+
+/*************************************************/
+/* Unsafe (No locking)                           */
+/* increments the queue pointer by the int       */
+/* argument.                                     */
+/*************************************************/
+void _increment_queue_ptr(int pos){
+  q_ptr += (sizeof(*q_ptr))*(pos);
+}
+
+/*************************************************/
+/* Unsafe (No locking)                           */
+/* gets the next queue elements and increments   */
+/* the queue pointer.                            */
+/*************************************************/
+/* increments q_ptr */
+void* _next_queue_element(){
+  void *element = NULL;
+
+  q_ptr += sizeof(q_ptr);
+  element = q_ptr;
+
+  return element;
 }
 
 /*************************************************/

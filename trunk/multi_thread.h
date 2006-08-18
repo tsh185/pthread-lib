@@ -2,11 +2,12 @@
 #define __MULTI_THREAD_H
 
 /* Error Codes */
-#define ERROR_CODE_THREAD_POOL_MALLOC 1
+#define ERROR_CODE_MALLOC 1
 #define ERROR_CODE_HAVE_WORK_MALLOC 2
 #define ERROR_CODE_WRONG_HAVE_WORK_SIZE 3
 #define ERROR_CODE_THREAD_CREATE_THREADS 4
 #define ERROR_CODE_THREAD_CREATE_PARAMETER 5
+
 
 /* Thread Operations */
 void create_threads(void *(*func_ptr)(void *), void *parameter, int num_threads);
@@ -33,9 +34,9 @@ void set_queue_available();
 
 
 struct function_ptrs_struct {
-  void *(*term_func_ptr)(void *);  
-  void *(*user1_func_ptr)(void *);  
-  void *(*user2_func_ptr)(void *);  
+  void *(*term_func_ptr)(void *);
+  void *(*user1_func_ptr)(void *);
+  void *(*user2_func_ptr)(void *);
 }
 
 #endif
