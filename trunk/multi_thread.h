@@ -1,5 +1,5 @@
-#ifndef __MULTI_THREAD_H
-#define __MULTI_THREAD_H
+#ifndef __MULTI_THREAD_H__
+#define __MULTI_THREAD_H__
 
 /* Error Codes */
 #define ERROR_CODE_MALLOC 1
@@ -21,7 +21,6 @@ void stop_threads();
 int should_stop();
 
 
-
 /* Queue Operations */
 int get_queue_size();
 void set_queue_size(int size);
@@ -32,11 +31,11 @@ int is_queue_available();
 void set_queue_unavailable();
 void set_queue_available();
 
-
 struct function_ptrs_struct {
-  void *(*term_func_ptr)(void *);
-  void *(*user1_func_ptr)(void *);
-  void *(*user2_func_ptr)(void *);
-}
+  void *(*term_func_ptr)();
+  void *(*user1_func_ptr)();
+  void *(*user2_func_ptr)();
+};
+typedef struct function_ptrs_struct FUNCTION_PTRS;
 
 #endif
