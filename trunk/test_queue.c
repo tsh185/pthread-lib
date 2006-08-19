@@ -42,9 +42,13 @@ void test_queue(){
   print_actuals(queue);
 
   print_queue(queue);
+  
+
 }
 
 int main(int argc, char **argv) {
   test_queue();
+  system("PAUSE");
+    
   return 0;
 }
