@@ -1,9 +1,7 @@
-#include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <libgen.h>
 #include "gen_queue.h"
 
 
@@ -23,6 +21,7 @@ void test_queue(){
 
 
   printf("Going to print queue second time\n");
+  print_queue(queue);
   print_actuals(queue);
 
 
@@ -33,8 +32,10 @@ void test_queue(){
   result = add(queue,"My 4");
   if(!result){printf("Not able to add to queue\n");}
   print_actuals(queue);
+  print_queue(queue);
 
   get_next(queue);
+  print_queue(queue);
 
   result = add(queue,"My 5");
   if(!result){printf("Not able to add to queue\n");}
@@ -45,4 +46,5 @@ void test_queue(){
 
 int main(int argc, char **argv) {
   test_queue();
+  return 0;
 }
