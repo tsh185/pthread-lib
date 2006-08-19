@@ -25,5 +25,6 @@ BOOL add(GEN_Q *queue, void *element);
 void *get_next(GEN_Q *queue);
 void print_queue(GEN_Q *queue);
 void print_actuals(GEN_Q *queue);
+void print_element(Q_ELEM *elem);
 
 #endif
