@@ -3,24 +3,34 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="1"/>
 	<Project>
-		<Option title="Console application"/>
+		<Option title="pthread-lib application"/>
 		<Option makefile="Makefile"/>
+		<Option makefile_is_custom="0"/>
+		<Option compiler="0"/>
 		<Build>
 			<Target title="default">
+				<Option output="C:\Documents and Settings\Bob\My Documents\Code\trunk\pthread-lib-project.exe"/>
+				<Option working_dir="."/>
+				<Option object_output=".objs"/>
+				<Option deps_output=".deps"/>
 				<Option type="1"/>
-				<Option parameters=""/>
-				<Option includeInTargetAll="1"/>
-				<Option projectCompilerOptionsRelation="3"/>
-				<Option projectLinkerOptionsRelation="3"/>
-				<Option projectIncludeDirsRelation="3"/>
-				<Option projectLibDirsRelation="3"/>
-				<Compiler>
-					<Add option=""/>
-				</Compiler>
-				<Linker>
-					<Add option=""/>
-				</Linker>
+				<Option compiler="0"/>
+				<Option projectResourceIncludeDirsRelation="1"/>
 			</Target>
 		</Build>
+		<Unit filename="gen_queue.c">
+			<Option compilerVar="CC"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="gen_queue.h">
+			<Option compilerVar=""/>
+			<Option compile="0"/>
+			<Option link="0"/>
+			<Option target="default"/>
+		</Unit>
+		<Unit filename="test_queue.c">
+			<Option compilerVar="CC"/>
+			<Option target="default"/>
+		</Unit>
 	</Project>
 </CodeBlocks_project_file>
