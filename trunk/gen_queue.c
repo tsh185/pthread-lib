@@ -1,14 +1,14 @@
-#include <pthread.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
-#include <libgen.h>
 #include "gen_queue.h"
 #include "util.h"
 
 #define DEFAULT_Q_SIZE 100
 #define THREAD_SAFE
+#define DEBUG
 
 int nulls_ok = 0;
 
@@ -81,6 +81,10 @@ void *get_next(GEN_Q *queue){
     return NULL;
   }
 
+#ifdef DEBUG
+  print_element(&(queue->queue_elements[queue->curr_id]));
+#endif
+
   next_id = queue->curr_id + 1;
 
   /* reset for circular queue */
@@ -92,14 +96,14 @@ void *get_next(GEN_Q *queue){
     return NULL;
   }
 
-  used = queue->queue_elements[queue->curr_id - 1].used; 
+  used = queue->queue_elements[next_id - 1].used;
   if(used){
     return NULL;
   }
 
-  queue->curr_id = next_id;
   queue->size--;
-  queue->queue_elements[queue->curr_id - 1].used = TRUE;
+  queue->queue_elements[next_id - 1].used = TRUE;
+  queue->curr_id = next_id;
 
   return queue->queue_elements[queue->curr_id - 1].value;
 }
@@ -113,24 +117,38 @@ void *get_element(int index){
 /******************************************************************************/
 /******************************************************************************/
 void print_queue(GEN_Q *queue){
+  if(queue == NULL){
+    return;
+  }
+
   void *element = NULL;
-  char *elem = NULL;
+  char *char_elem = NULL;
 
   int size = queue->size;
-  
+  Q_ELEM *all_elements = queue->queue_elements;
+
   int i = 0;
-  while((element = get_next(queue)) != NULL){
-    elem = (char *)element;
-    printf("Element %d [%s]\n",i,elem);
-    i++;
+  for (i=0; i<size; i++){
+    element = all_elements[i].value;
+    char_elem = (char *)element;
+    printf("Element %d [%s]\n",i,char_elem);
   }
   printf("\n");
 
 }
+
 
 void print_actuals(GEN_Q *queue){
   printf(" capacity [%d]\n", queue->capacity);
   printf(" size [%d]\n", queue->size);
   printf(" tail_id [%d]\n", queue->tail_id);
   printf(" curr_id [%d]\n\n", queue->curr_id);
+}
+
+void print_element(Q_ELEM *elem){
+  if(elem != NULL){
+    printf("Element Id [%d]\n", elem->id);
+    printf("Element Used [%d]\n",elem->used);
+    printf("Element Value [%s]\n",elem->value);
+  }
 }
