@@ -50,7 +50,7 @@ AutoIncBuildNr=0
 [Unit1]
 FileName=util.c
 CompileCpp=0
-Folder=pthread-lib-project
+Folder=
 Compile=1
 Link=1
 Priority=1000
@@ -60,7 +60,7 @@ BuildCmd=
 [Unit2]
 FileName=gen_queue.c
 CompileCpp=0
-Folder=pthread-lib-project
+Folder=
 Compile=1
 Link=1
 Priority=1000
@@ -70,7 +70,7 @@ BuildCmd=
 [Unit4]
 FileName=gen_queue.h
 CompileCpp=0
-Folder=pthread-lib-project
+Folder=
 Compile=1
 Link=1
 Priority=1000
@@ -80,7 +80,7 @@ BuildCmd=
 [Unit5]
 FileName=util.h
 CompileCpp=0
-Folder=pthread-lib-project
+Folder=
 Compile=1
 Link=1
 Priority=1000
@@ -90,7 +90,17 @@ BuildCmd=
 [Unit3]
 FileName=test_queue.c
 CompileCpp=0
-Folder=pthread-lib-project
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit8]
+FileName=multi_thread.h
+CompileCpp=0
+Folder=thread
 Compile=1
 Link=1
 Priority=1000
