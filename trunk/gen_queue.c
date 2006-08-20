@@ -40,7 +40,10 @@ GEN_Q *create_queue(int capacity){
 }
 
 /******************************************************************************/
-/* Increments the tail */
+/* Adds an element to the generic queue.                                      */
+/* queue - queue that is being used                                           */
+/* element - element to be added to the queue                                 */
+/* Notes: Increments the tail and sets used to TRUE.                          */
 /******************************************************************************/
 BOOL add(GEN_Q *queue, void *element){
   if(queue == NULL || element == NULL){
@@ -65,6 +68,30 @@ BOOL add(GEN_Q *queue, void *element){
   queue->queue_elements[queue->tail_id - 1].value = element;
 
   return TRUE;
+}
+/******************************************************************************/
+/******************************************************************************/
+BOOL add_list(GEN_Q *queue, void *elements, int size_of_single_element){
+  if(queue == NULL || elements == NULL){
+    return FALSE;
+  }
+  
+  BOOL success = TRUE;
+  BOOL rc = FALSE;
+  int size = size_of_single_element;
+  int total_size = sizeof(*elements);
+  int num_elements = size/total_size;
+  
+  int i;
+  for(i=0; i<num_elements; i++){
+    rc = add(queue, (void *)&elements[size]);
+    if(!rc){
+      success = FALSE;
+    }  
+    size+=size;
+  }
+
+  return success;
 }
 
 /******************************************************************************/
