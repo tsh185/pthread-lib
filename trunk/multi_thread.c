@@ -10,58 +10,39 @@
 /* Work Pool of Threads */
 pthread_t *thread_pool = NULL;
 
-/* Queue of widgets */
-void *queue = NULL;
-
 /* Mutexes */
-pthread_mutex_t queue_mutex;
 pthread_mutex_t stop_mutex;
 
 /* Global Variables */
 /* Sizes */
 int pool_size = 1;
-int queue_size = 0;
 
 /* Thread status */
 int thread_hold;
-int thread_stop;
-
-/* Queue variables */
-void *q_ptr = 0;
-int q_avail = 0;
+int thread_stop = 0;
 
 /* Constants */
 const char *CLASS_NM = "multi_thread.c";
 
 /* Private functions */
-void  lock_queue();
-void  unlock_queue();
 void  lock_stop();
 void  unlock_stop();
-int   _get_queue_size();
-void  _set_queue_size(int size);
-void* _get_queue_ptr();
-void  _set_queue_ptr(int pos);
-void  _set_queue_unavailable();
-void  _set_queue_available();
-int   _is_queue_available();
-void* _next_queue_element();
-void  _increment_queue_ptr(int);
+void *signal_handler_function(void *functions);
 
+/*****************************************************************************/
+/*! @fn void create_threads(void *(*func_ptr)(), void *parameter, int num_threads)
+    @brief Creates \a num_threads threads executing \a func_ptr.
 
+    @param void *(void *) func_ptr ptr to the function to be executed by each thread
+    @param void *parameter generic parameter, each thread will have it's own local copy.
+    @param int num_threads the number of threads to create
 
-/******************************************************************************/
-/* Creates the threads and passes them the function to be executed and the    */
-/* generic parameter as a void ptr. The array of threads are stored in the    */
-/* thread_pool variable.                                                      */
-/*                                                                            */
-/* Parameters: void *(void *) func_ptr - ptr to the function to be executed   */
-/*                                       by each thread.                      */
-/*             void *parameter - generic parameter, each thread will have     */
-/*                               it's own local copy.                         */
-/*             int num_threads - the number of threads to create              */
-/******************************************************************************/
-void create_threads(void *(*func_ptr)(void *), void *parameter, int num_threads){
+    Creates the threads and passes them the function to be executed and the   
+    generic parameter as a void ptr. The array of threads are stored in the  
+    thread_pool variable.                                                   
+*/
+/*****************************************************************************/
+void create_threads(void *(*func_ptr)(), void *parameter, int num_threads){
   int status;
   int thread_num;
   const char *METHOD_NM = "create_threads: ";
@@ -77,11 +58,11 @@ void create_threads(void *(*func_ptr)(void *), void *parameter, int num_threads)
   }
 
   /* Initalize local mutex variables */
-  status = pthread_mutex_init(&queue_mutex, NULL);
-  check_status(status, "pthread_mutex_init", "queue_mutex bad status");
-
   status = pthread_mutex_init(&stop_mutex, NULL);
   check_status(status, "pthread_mutex_init", "stop_mutex bad status");
+
+  /* Set the thread_stop flag to false */
+  thread_stop = 0;
 
   /* Initalize all threads and pass the parameter */
   int i;
@@ -279,6 +260,7 @@ int block_all_signals(){
 
   sigset_t signals;
   sigfillset(&signals);
+  /* sigdelset(sigset_t *set, int signo); for removing a signal to poll the threads */
   int rc;
 
   rc = pthread_sigmask(SIG_BLOCK, &signals, NULL);
@@ -288,42 +270,67 @@ int block_all_signals(){
 /*****************************************************************************/
 /* Creates a single thread signal handler to handle all interrupt signals    */
 /* for all threads.                                                          */
+/* Parameters                                                                */
+/* function_ptrs - FUNCTION_PTRS with the term_func_ptr populated,at the     */
+/*                 very least.                                               */
 /*****************************************************************************/
-int signal_handler_create(void *arg){
+int signal_handler_create(void *function_ptrs){
   int rc =0;
   pthread_t thread_id;
 
-  rc = pthread_create(&thread_id, NULL, signal_handler_function, (void *)arg);
+  rc = pthread_create(&thread_id, NULL, signal_handler_function, (void *)function_ptrs);
   return rc;
 }
 
 /*****************************************************************************/
+/* This is the function the signal handler executes.                         */
+/* It runs until the term signal (SIGTERM) is sent, then it executes the     */
+/* defined exit function and exits itself.                                   */
+/*                                                                           */
+/* Parameters                                                                */
+/* functions - FUNCTION_PTRS function with the term_func_ptr member          */
+/*             populated with a function.                                    */
 /*****************************************************************************/
 void *signal_handler_function(void *functions){
   const char *METHOD_NM = "signal_handler_function: ";
-  FUNCTION_PTRS function_ptrs;
+  FUNCTION_PTRS *function_ptrs = (FUNCTION_PTRS *)functions;
   sigset_t signals;
   int rc = 0;
   int sig_caught;
   int still_running = 1;
-  void *(*term_func_ptr)(void *) = (void *)(functions->term_func);
-  void *(*user1_func_ptr)(void *) = (void *)(functions->user_func1);
-  void *(*user2_func_ptr)(void *) = (void *)(functions->user_func2);
-  /* FUNC_PTR fun_ptr = (FUNC_PTR)arg; */
+
+  /* Check incomming parameter */
+  if(functions == NULL){
+    printf("Error, functions is NULL\n");
+    stop_threads();
+    exit(ERROR_CODE_SIG_HANDLER_NO_FUNCTIONS);
+  }
 
   sigfillset(&signals);
   while(still_running){
-    rc = sigwait(&signals, &sigcaught);
+
+    rc = sigwait(&signals, &sig_caught);
+    printf("%s Caught signal [%d]\n",METHOD_NM,sig_caught);
+
     switch(sig_caught){
       case SIGTERM:
-        term_func_ptr();
-	    still_running = 0;
-	    break;
-      case SIGUSER1:
-        user_func1();
+        still_running = 0;
+        if(function_ptrs->term_func_ptr != NULL){
+          function_ptrs->term_func_ptr();
+        }
         break;
-      case SIGUSER2:
-        user_func2();
+      case SIGUSR1:
+        if(function_ptrs->user1_func_ptr != NULL){
+          function_ptrs->user1_func_ptr();
+        }
+        break;
+      case SIGUSR2:
+        if(function_ptrs->user2_func_ptr != NULL){
+          function_ptrs->user2_func_ptr();
+        }
+        break;
+      case SIGHUP:
+        //re-read configuration file
         break;
       default:
 	printf("%s Caught Signal [%d], Not Stopping.\n", METHOD_NM, sig_caught);
@@ -336,19 +343,6 @@ void *signal_handler_function(void *functions){
 
 
 /* Mutex Operations */
-/*************************************/
-/*    Queue Mutex Operations         */
-/*************************************/
-void lock_queue() {
-  int status = pthread_mutex_lock( &queue_mutex );
-  check_status( status, "pthread_mutex_lock", "bad status (queue_mutex)");
-}
-
-void unlock_queue() {
-  int status = pthread_mutex_unlock( &queue_mutex );
-  check_status( status, "pthread_mutex_unlock", "bad status (work_queue_mutex)");
-}
-
 /*************************************/
 /*    Stop Working Operations        */
 /*************************************/
@@ -375,81 +369,8 @@ void unlock_stop() {
 void destroy_all_mutexes(){
   int status;
 
-  status = pthread_mutex_destroy(&queue_mutex);
-  check_status(status,"pthread_mutex_destroy", "bad status (queue_mutex)");
-
   status = pthread_mutex_destroy(&stop_mutex);
   check_status(status,"pthread_mutex_destroy", "bad status (stop_mutex)");
-}
-/* Queue Operations */
-/******************************************************************************/
-/* Returns the queue_size in the global variable.                             */
-/*                                                                            */
-/* Parametes: None                                                            */
-/******************************************************************************/
-int get_queue_size(){
-  int size = 0;
-
-  lock_queue();
-  size = queue_size;
-  unlock_queue();
-
-  return size;
-}
-
-void set_queue_size(int size){
-  lock_queue();
-  queue_size = size;
-  unlock_queue();
-}
-
-void* get_queue_ptr(){
-  void* ptr = NULL;
-  lock_queue();
-  ptr = q_ptr;
-  unlock_queue();
-
-  return ptr;
-}
-
-void increment_queue_ptr(int pos){
-  lock_queue();
-  q_ptr += (sizeof(*q_ptr))*(pos);
-  unlock_queue();
-}
-
-/* increments q_ptr */
-void* next_queue_element(){
-  void *element = NULL;
-
-  lock_queue();
-  q_ptr += sizeof(q_ptr);
-  element = q_ptr;
-  unlock_queue();
-
-  return element;
-}
-
-int is_queue_available(){
-  int avail = 0;
-
-  lock_queue();
-  avail = q_avail;
-  unlock_queue();
-
-  return avail;
-}
-
-void set_queue_unavailable(){
-  lock_queue();
-  q_avail = 0;
-  unlock_queue();
-}
-
-void set_queue_available(){
-  lock_queue();
-  q_avail = 1;
-  unlock_queue();
 }
 
 /* Thread Operations */
@@ -481,98 +402,12 @@ int should_stop() {
   return should_stop;
 }
 
+void set_stop(int stop){
+  lock_stop();
+  thread_stop = stop;
+  unlock_stop();
+}
+
 /******************************************************************************/
 /********************  UnSafe/Private Operations  *****************************/
 /******************************************************************************/
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* Returns the queue_size in the global variable.*/
-/*************************************************/
-int _get_queue_size(){
-  return queue_size;
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* sets the queue_size in the global variable.   */
-/*************************************************/
-void _set_queue_size(int size){
-  queue_size = size;
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* Returns the current position of the queue     */
-/*  pointer.                                     */
-/*************************************************/
-void* _get_queue_ptr(){
-  return q_ptr;
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* sets the current position of the queue        */
-/*  pointer.                                     */
-/*************************************************/
-void _set_queue_ptr(int pos){
-  q_ptr = queue;
-  q_ptr += sizeof(*q_ptr)*pos;
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* increments the queue pointer by the int       */
-/* argument.                                     */
-/*************************************************/
-void _increment_queue_ptr(int pos){
-  q_ptr += (sizeof(*q_ptr))*(pos);
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* gets the next queue elements and increments   */
-/* the queue pointer.                            */
-/*************************************************/
-/* increments q_ptr */
-void* _next_queue_element(){
-  void *element = NULL;
-
-  q_ptr += sizeof(q_ptr);
-  element = q_ptr;
-
-  return element;
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* Sets the q_avail flag so that the queue is    */
-/*  unavailable.  This happens when the queue    */
-/*  is being repopulated and needs exclusive     */
-/*  access.                                      */
-/*************************************************/
-void _set_queue_unavailable(){
-  q_avail = 0;
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* Sets the q_avail flag so that the queue is    */
-/*  available.  This happens when the queue      */
-/*  is being populated with data and ready to be */
-/*  accessed.                                    */
-/*************************************************/
-void _set_queue_available(){
-  q_avail = 1;
-}
-
-/*************************************************/
-/* Unsafe (No locking)                           */
-/* Returns the q_avail flag indicating whether   */
-/*  the queue is available or not.               */
-/*************************************************/
-int _is_queue_available(){
-  return q_avail;
-}
-
-
