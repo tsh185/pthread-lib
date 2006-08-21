@@ -50,6 +50,10 @@ TEST_QUEUE_OBJS = \
 	test_queue.o \
 	gen_queue.o
 
+EXAMPLE_OBJS = \
+	example.o \
+	multi_thread.o
+
 # list all Pro*C source files here
 PROC_LIST =\
 	in_closer.pc \
@@ -59,7 +63,8 @@ PROC_LIST =\
         thread.pc \
         rp.pc \
 	multi_thread.c \
-	test.c
+	test.c \
+        example.c
 
 # list all non-Pro*C source files here
 NONPROC_LIST =\
@@ -105,6 +110,8 @@ test.o: test.c
 test_queue.o: test_queue.c
 
 gen_queue.o: gen_queue.c gen_queue.h
+
+example.o: example.c
 
 #rp.o: rp.c thread_gen.h 
 
@@ -159,6 +166,13 @@ test: $(TEST_OBJS)
 test_queue: $(TEST_QUEUE_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(TEST_QUEUE_OBJS) -o $@ \
+	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
+	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	@$(CHMOD) 750 $@
+
+example: $(EXAMPLE_OBJS)
+	@$(ECHO) "\n*** Target: $@ (linking)"
+	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE_OBJS) -o $@ \
 	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
 	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
