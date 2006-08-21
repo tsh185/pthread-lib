@@ -71,20 +71,22 @@ BOOL add(GEN_Q *queue, void *element){
 }
 /******************************************************************************/
 /******************************************************************************/
-BOOL add_list(GEN_Q *queue, void *elements, int size_of_single_element){
+BOOL add_list(GEN_Q *queue, void *elements, size_t size_of_array, size_t element_size){
   if(queue == NULL || elements == NULL){
     return FALSE;
   }
   
   BOOL success = TRUE;
   BOOL rc = FALSE;
-  int size = size_of_single_element;
-  int total_size = sizeof(*elements);
-  int num_elements = size/total_size;
+  size_t size = 1;
+  size_t total_size = size_of_array;
+  int num_elements = total_size/size;
+  
+  char *char_elements = (char *)elements;
   
   int i;
   for(i=0; i<num_elements; i++){
-    rc = add(queue, (void *)&elements[size]);
+    rc = add(queue, char_elements + i);
     if(!rc){
       success = FALSE;
     }  
@@ -108,10 +110,6 @@ void *get_next(GEN_Q *queue){
     return NULL;
   }
 
-#ifdef DEBUG
-  print_element(&(queue->queue_elements[queue->curr_id]));
-#endif
-
   next_id = queue->curr_id + 1;
 
   /* reset for circular queue */
@@ -119,7 +117,7 @@ void *get_next(GEN_Q *queue){
     next_id = 1;
   }
 
-  if(queue->curr_id == queue->tail_id || next_id == queue->tail_id){
+  if(queue->curr_id == queue->tail_id){
     return NULL;
   }
 
@@ -164,7 +162,33 @@ void print_queue(GEN_Q *queue){
 
 }
 
+/******************************************************************************/
+/******************************************************************************/
+void print_queue_type(GEN_Q *queue, char *type){
+  if(queue == NULL){
+    return;
+  }
 
+  void *element = NULL;
+  char *char_elem = NULL;
+
+  int size = queue->size;
+  Q_ELEM *all_elements = queue->queue_elements;
+
+  int i = 0;
+  for (i=0; i<size; i++){
+    element = all_elements[i].value;
+    
+    int elem = (int)element;
+    
+    printf("Element %d [%d]\n",i,elem);
+  }
+  printf("\n");
+
+}
+
+/******************************************************************************/
+/******************************************************************************/
 void print_actuals(GEN_Q *queue){
   printf(" capacity [%d]\n", queue->capacity);
   printf(" size [%d]\n", queue->size);
@@ -172,6 +196,8 @@ void print_actuals(GEN_Q *queue){
   printf(" curr_id [%d]\n\n", queue->curr_id);
 }
 
+/******************************************************************************/
+/******************************************************************************/
 void print_element(Q_ELEM *elem){
   if(elem != NULL){
     printf("Element Id [%d]\n", elem->id);
