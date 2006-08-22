@@ -1,32 +1,30 @@
-#ifndef __THREAD_MANAGER__
-#define __THREAD_MANAGER__
+/*
+    pthread-lib is a set of pthread wrappers with additional features.
+    Copyright (C) 2006  Nick Powers
+    See <http://code.google.com/p/pthread-lib/> for more details and source.
 
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
+#ifndef __THREAD_MANAGER_H__
+#define __THREAD_MANAGER_H__
+#include "task.h"
 
 /* Configuration file names */
-#define TASK "task"
-
-#define INTERVAL "interval" /* any time in HH24:MM:SS */
-
-#define THREAD_ACTION "thread.action"
-#define KILL "kill.thread"
-#define REPLACE "replace"
-#define KILL_PROGRAM "kill.program"
-
-#define WORK_LOAD_INCREASE "work.load.increase"
-#define WORK_LOAD_DECREASE "work.load.decrease"
-#define ADD "add"
-#define SUB "sub"
-#define VALUE "value"
-
-#define ACTION "action"
-#define BOUNDS "bounds"
-#define GREATER ">"
-#define LESS "<"
 
 #define INTERNAL_CONFIG_FILENAME "thread_manager.config"
-#define READ "r"
-#define FILE_LINE_SIZE 180
-
 
 /* Public Methods */
 
