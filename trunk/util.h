@@ -20,11 +20,14 @@
 
 #ifndef __UTIL_H__
 #define __UTIL_H__
+#include "task.h"
+
 
 #define FALSE 0
 #define TRUE !FALSE 
 
 typedef int BOOL;
+typedef void (*FUNC_PTR)();
 
 #define READ "r"
 #define FILE_LINE_SIZE 180
