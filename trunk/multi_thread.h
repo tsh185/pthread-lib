@@ -29,8 +29,6 @@
 #define ERROR_CODE_SIG_HANDLER_NO_FUNCTIONS 2
 
 
-typedef void (*FUNC_PTR)();
-
 /* Thread Operations */
 pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads);
 void join_threads(int *t_status);
