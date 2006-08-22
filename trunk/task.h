@@ -21,6 +21,8 @@
 #ifndef __TASK_H__
 #define __TASK_H__
 
+#include "util.h"
+
 #define INITIAL_NUM_TASKS 5
 #define NUM_TASKS_INCREMENT 5
 #define TIME_LEN 8
@@ -73,11 +75,11 @@ struct task {
   thread_action dead_thread_action;
   struct work_load load_increase;
   struct work_load load_decrease;
-  FUNC_PTR function_ptr;
+  void *(function_ptr)(); 
 };
 
-typedef struct task TASK;
 typedef struct work_load WORK_LOAD;
+typedef struct task TASK;
 
 /* Public Methods */
 void init_tasks(int num_tasks);
