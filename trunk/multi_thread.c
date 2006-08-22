@@ -1,3 +1,23 @@
+/*
+    pthread-lib is a set of pthread wrappers with additional features.
+    Copyright (C) 2006  Nick Powers
+    See <http://code.google.com/p/pthread-lib/> for more details and source.
+
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+*/
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -56,7 +76,7 @@ void  _handle_ping_signal();
     thread_pool variable.                                                   
 */
 /*****************************************************************************/
-void create_threads(void *(*func_ptr)(), void *parameter, int num_threads){
+pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads){
   int status;
   int thread_num;
   const char *METHOD_NM = "create_threads: ";
@@ -84,6 +104,7 @@ void create_threads(void *(*func_ptr)(), void *parameter, int num_threads){
     CHECK_STATUS(status, "pthread_create", "thread bad status");
   }
 
+  return thread_pool;
 } /* end create_threads */
 
 
