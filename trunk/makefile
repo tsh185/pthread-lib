@@ -9,7 +9,9 @@ SUBDIRS=
 EXE_LIST = \
 	test \
 	test_queue \
-	example
+	example1 \
+        example2 \
+        example3
 
 # list object file dependencies for each executable here
 MULTI_THREAD_OBJS = \
@@ -23,15 +25,20 @@ TEST_QUEUE_OBJS = \
 	test_queue.o \
 	gen_queue.o
 
-EXAMPLE_OBJS = \
-	example.o \
+EXAMPLE1_OBJS = \
+	example1.o \
+	multi_thread.o
+
+EXAMPLE2_OBJS = \
+	example2.o \
+	multi_thread.o
+
+EXAMPLE3_OBJS = \
+	example3.o \
 	multi_thread.o
 
 # list all Pro*C source files here
-PROC_LIST =\
-	multi_thread.c \
-	test.c \
-    example.c
+PROC_LIST =
 
 # list all non-Pro*C source files here
 NONPROC_LIST =\
@@ -58,7 +65,11 @@ test_queue.o: test_queue.c
 
 gen_queue.o: gen_queue.c gen_queue.h
 
-example.o: example.c
+example1.o: example1.c
+
+example2.o: example2.c
+
+example3.o: example3.c
 
 # link targets (one for each executable)
 test: $(TEST_OBJS)
@@ -75,9 +86,23 @@ test_queue: $(TEST_QUEUE_OBJS)
 	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
 
-example: $(EXAMPLE_OBJS)
+example1: $(EXAMPLE1_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
-	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE_OBJS) -o $@ \
+	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE1_OBJS) -o $@ \
+	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
+	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	@$(CHMOD) 750 $@
+
+example2: $(EXAMPLE2_OBJS)
+	@$(ECHO) "\n*** Target: $@ (linking)"
+	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE2_OBJS) -o $@ \
+	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
+	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	@$(CHMOD) 750 $@
+
+example3: $(EXAMPLE3_OBJS)
+	@$(ECHO) "\n*** Target: $@ (linking)"
+	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE3_OBJS) -o $@ \
 	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
 	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
