@@ -26,6 +26,16 @@
 #define INITIAL_NUM_TASK_TS 5
 #define NUM_TASK_TS_INCREMENT 5
 #define TIME_LEN 8
+#define DATE_TIME_LEN 19
+
+#define NUM_TASK_DEFINITIONS 4
+#define NUM_WORK_LOAD_DEFINITIONS 3
+#define NUM_THREAD_ACTION_DEFINTIONS 1
+#define NUM_SCHEDULE_DEFINITIONS 2
+
+#define NUM_BLANK_LINES 3
+
+#define NUM_ERROR_CHARS 512
 
 /* Configuration file names */
 #define TASK "task"
@@ -69,6 +79,7 @@ struct work_load_struct {
 typedef struct work_load_struct WORK_LOAD;
 
 struct sched_struct {
+  char start_char[DATE_TIME_LEN + 1];
   struct tm start;
   int repeat;
 };

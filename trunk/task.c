@@ -135,16 +135,233 @@ BOOL add_task(TASK_T *task){
 }
 
 /*****************************************************************************/
+/*! @fn char *add_tasks_by_file(char *filename)
+    @brief Adds tasks to the thread manager's queue via a file.
+    @param char *filename Fully qualified filename to open.
+
+    See the documentation on how to create a task configuration file.
+*/
 /*****************************************************************************/
-BOOL add_tasks_by_file(char *filename){
-  /*
-  fopen(filename,READ);
+char *add_tasks_by_file(char *filename){
+  char line[FILE_LINE_SIZE + 1];
+  char *str = NULL;
+  char *val = NULL;
+  char *sp = NULL;
+  const char *delim = "=\0";
+  const char *delim2 = "# \t\r\n\0";
+  int num_blank_lines = NUM_BLANK_LINES; 
+  int i,j,k,l;
+  char errors[NUM_ERROR_CHARS+1];
+  char buf[BUFSIZ];
+  int num_tasks = 0;
+  int error_reading_task = FALSE;
+
+  memset(errors, 0 , NUM_ERROR_CHARS+1);
+  memset(buf, 0 , BUFSIZ);
+
+  sprintf(errors, "Errors while parsing file %s:\n", filename);
+
+  if(filename == NULL){
+    STR_CAT(errors,"filename passed in is NULL.\n", sizeof(errors));
+    strcat(errors,"filename passed in is NULL.\n");
+    return errors;
+  }
+
+  FILE *task_file = NULL;
+  task_file = fopen(filename, READ);
+
+  if(task_file == NULL){
+    STR_CAT(errors,"file can not be opened.\n", sizeof(errors));
+    return errors;
+  }
+
+  while(!feof(config_file)){
+
+    GET_LINE(task_file, line, FILE_LINE_SIZE, str, val, delim, delim2, &sp);
+    if(strcasecmp(str,TASK) == 0){
+      num_tasks++;
+      TASK_T task;
+      memset(&task, 0, sizeof(task));
+
+      for(i=0; i<NUM_TASK_DEFINITIONS; i++){
+        /* Interval */
+        if(strcasecmp(str, INTERVAL) == 0){
+          task.interval = val;  
+
+          _validate_interval(task.interval);
+        }
 
 
+        /* thread action: action */
+        else if(strcasecmp(str, THREAD_ACTION) == 0){
+          int itr = num_blank_lines;
+          /* Specific fields */
+          for(j=0; j<NUM_THREAD_ACTION_DEFINTIONS; j++){
+            if(strcasecmp(str, ACTION) == 0){
+              /* actions: kill_it, replace, kill_program */
+              if(strcasecmp(val, KILL) == 0){
+                task.dead_thread_action = kill_it;
+              }
+              else if(strcasecmp(val, REPLACE) == 0){
+                task.dead_thread_action = replace;
+              }
+              else if(strcasecmp(val, KILL_PROGRAM) == 0){
+                task.dead_thread_action = kill_program; 
+              } else {
+                sprintf(buf,"Expected action value next to action tag. Got [%s] instead.\n", val);
+                STR_CAT(errors,buf,sizeof(errors)); 
+                memset(buf,0,sizeof(buf));
+              }
+            }
+            else {
+              sprintf(buf,"Expected action tag under thread_action tag. Got [%s] instead.\n",val);
+              STR_CAT(errors,buf,sizeof(errors)); 
+              memset(buf,0,sizeof(buf));
+            }
+          }/* end for (j) loop */
 
-  fclose(filename);
-  */
+        _validate_thread_action(task.dead_thread_action);
 
+        }/* end if THREAD_ACTION */
+
+
+        /* work load: type, bounds, action, value */
+        else if(strcasecmp(str, WORK_LOAD) == 0){
+
+          WORK_LOAD work;
+          for(k=0; k<NUM_WORK_LOAD_DEFINITIONS; k++){
+            /* types: increase, decrease */
+            if(strcasecmp(str, TYPE) == 0){
+              if(strcasecmp(val, INCREASE) == 0){
+                work.type=increase;
+              }
+              else if(strcasecmp(val, DECREASE) == 0){
+                work.type=decrease;
+              } 
+              else {
+                sprintf(buf,"Expected a value next to the type tag. Got [%s] instead\n", val);  
+                STR_CAT(errors,buf,sizeof(errors));
+                memset(buf,0,sizeof(buf));
+              }
+
+            }
+            /* bounds: any integer */
+            else if(strcasecmp(str, BOUNDS) == 0){
+              if(is_digit(str)){
+                work.bounds = taskatoi(val);
+              } else {
+                sprintf(buf,"Expected an integer next to the bounds tag. Got [%s] instead\n", val);
+                STR_CAT(errors,buf,sizeof(errors));
+                memset(buf,0,sizeof(buf));
+              }
+            }
+            /* work load action: add, sub */ 
+            else if(strcasecmp(str, WORK_LOAD_ACTION) == 0){
+              if(strcasecmp(val, ADD) == 0 ||
+                 strcasecmp(val, ADD_LONG) == 0){
+                work.action = add;
+              } 
+              else if(strcasecmp(val, SUB) == 0 ||
+                      strcasecmp(val, SUB_LONG) == 0){
+                work.action = sub;
+              } 
+              else {
+                sprintf(buf,"Expected a value next to the type tag. Got [%s] instead\n",val);
+                STR_CAT(errors,buf,sizeof(errors));
+                memset(buf,0,sizof(buf));
+              }
+            }
+            /* value: any integer */
+            else if(strcasecmp(str, VALUE) == 0){
+              if(is_digit(val)){
+                work.value = atoi(val); 
+              } 
+              else {
+                sprintf(buf,"Expected an integer next to the value tag. Got [%s] instead,\n",val);
+                STR_CAT(errors,buf,sizeof(errors));
+                memset(buf,0,sizeof(buf));
+              }
+            } else {
+              sprintf(buf,"Expected a tag under work_load tag. Got [%s] instead.\n",str);
+              STR_CAT(errors,buf,sizeof(errors));
+              memset(buf,0,sizeof(buf));
+            }
+          }/* end for work_load loop */
+
+        _validate_work_load(&work);
+        _copy_work_to_task(&task, &work);
+
+        }/* end if work_load tag */
+
+
+        /* schedule: start, repeat */
+        else if(strcasecmp(str, SCHEDULE) == 0){
+          SCHEDULE sched;
+
+          for(l=0; l<NUM_SCHEDULE_DEFINITIONS; l++){
+            if(strcasecmp(str,START) == 0){
+              sched.start_char = val;     
+            }
+            else if(strcasecmp(str, REPEAT) == 0){
+              if(strcasecmp(val,"true") == 0){
+                sched.repeat = TRUE;
+              }
+              else if(strcasecmp(val,"false") == 0){
+                sched.repeat = FALSE;
+              }
+              else {
+              sprintf(buf,"Expected a value of true or false next to repeat tag. Got [%s] instead.\n",val);
+              STR_CAT(errors,buf,sizeof(errors));
+              memset(buf,0,sizeof(buf));
+              }
+            } 
+            else {
+              sprintf(buf,"Expected a tag under schedule tag. Got [%s] instead.\n",str);
+              STR_CAT(errors,buf,sizeof(errors));
+              memset(buf,0,sizeof(buf));
+            }
+
+          }/* end for schedule */
+
+          _validate_schedule(&sched);
+          _copy_sched_to_task(&task, &sched);
+
+        }/* end if schedule tag */ 
+        else {
+          sprintf(buf,"tag [%s] is unrecognized under the task tag\n", str);
+          STR_CAT(errors, buf, sizeof(errors-1));
+          memset(buf,0,sizeof(buf));
+        }
+
+      }/* end for loop - task tag */
+    }/* end if task tag */
+
+    /* add the task to the queue of tasks */
+    if(!error_reading_task){
+      add_task(&task);
+#ifdef DEBUG
+     printf("Added task number %d\n",num_tasks);
+#endif
+    } else {
+      sprintf(buf,"Not able to add task number %d. See errors for more information\n",num_tasks);
+      STR_CAT(errors,buf,sizeof(errors));
+      memset(buf,0,sizeof(buf));
+    }
+  }/* end while not end of file */
+
+
+  if(errors[1] != '\0'){
+     sprintf(buf, "Errors while parsing file %s\n", filename);
+     STR_CAT(errors, buf, sizeof(errors));
+     memset(buf,0,sizeof(buf));
+  }
+
+  /* close the file */
+  if(task_file){
+    fclose(task_file);
+  }
+
+  return TRUE;
 }
 
 /*****************************************************************************/
@@ -649,7 +866,32 @@ int _get_task_by_id(int id){
   return -1;
 }
 
-/*! This public-domain C implementation by Darel R. Finley.
+/*****************************************************************************/
+/*!
+
+*/
+/*****************************************************************************/
+int _handle_config_element(char *tag, char *value, char *source, char **sp){
+  if(!tag){
+    return;
+  }
+
+  /* found a task element */
+  if(strcasecmp(str,TASK) == 0){
+
+  }
+
+}
+
+/*****************************************************************************/
+/*! @fn int quick_sort_tasks(TASK_T *arr, int elements)
+    @brief Quick sort function for tasks
+    @param TASK_T arr An array of tasks
+    @param int elements Number of elements to be sorted
+
+  This code was taken from the Internet and was not created by myself.
+
+  This public-domain C implementation by Darel R. Finley.
 
   - Returns true if sort was successful, or false if the nested
     pivots went too deep, in which case your array will have
@@ -663,6 +905,7 @@ int _get_task_by_id(int id){
 
   - This function was modified by Nick Powers on 2006/08/22.
 */
+/*****************************************************************************/
 int quick_sort_tasks(TASK_T *arr, int elements) {
 
   int  piv, beg[Q_SORT_MAX_LEVELS], end[Q_SORT_MAX_LEVELS], i=0, L, R;
