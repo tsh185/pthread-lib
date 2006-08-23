@@ -20,8 +20,6 @@
 
 #ifndef __UTIL_H__
 #define __UTIL_H__
-#include "task.h"
-
 
 #define FALSE 0
 #define TRUE !FALSE 
@@ -43,9 +41,11 @@ typedef void (*FUNC_PTR)();
 /* Macro for easy malloc check */
 #define CHECK_MALLOC(var,method,msg){if(!var){LOG_ERROR(method,msg); exit(ERROR_CODE_MALLOC);}}
 
-#define GET_TIME_AS_INT(tm) {int min = ((tm.tm_hour+1)*60) + tm.tm_min; }
+#define CHECK_TEST(num,result){if(!result){printf("Test %d failed\n", num);} }
 
+
+/* General Error Codes */
+#define ERROR_CODE_MALLOC 1
 /* Public Functions */
-BOOL quick_sort_tasks(TASK *arr, int elements);
 
 #endif
