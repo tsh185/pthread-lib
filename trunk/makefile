@@ -84,43 +84,37 @@ example3.o: example3.c
 test: $(TEST_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(TEST_OBJS) -o $@ \
-	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
-	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	    -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
 
 test_queue: $(TEST_QUEUE_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(TEST_QUEUE_OBJS) -o $@ \
-	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
-	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	    -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
 
 test_task: $(TEST_TASK_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(TEST_TASK_OBJS) -o $@ \
-	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
-	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	    -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
 
 example1: $(EXAMPLE1_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE1_OBJS) -o $@ \
-	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
-	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	    -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
 
 example2: $(EXAMPLE2_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE2_OBJS) -o $@ \
-	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
-	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	    -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
 
 example3: $(EXAMPLE3_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(EXAMPLE3_OBJS) -o $@ \
-	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
-	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	    -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
 
 # target to clean build environment (do not modify)
