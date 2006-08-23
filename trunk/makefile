@@ -11,7 +11,8 @@ EXE_LIST = \
 	test_queue \
 	example1 \
         example2 \
-        example3
+        example3 \
+	test_task
 
 # list object file dependencies for each executable here
 MULTI_THREAD_OBJS = \
@@ -24,6 +25,10 @@ TEST_OBJS = \
 TEST_QUEUE_OBJS = \
 	test_queue.o \
 	gen_queue.o
+
+TEST_TASK_OBJS = \
+	test_task.o \
+	task.o
 
 EXAMPLE1_OBJS = \
 	example1.o \
@@ -63,6 +68,10 @@ test.o: test.c
 
 test_queue.o: test_queue.c
 
+test_task.o: test_task.c task.h
+
+task.o: task.c task.h
+
 gen_queue.o: gen_queue.c gen_queue.h
 
 example1.o: example1.c
@@ -82,6 +91,13 @@ test: $(TEST_OBJS)
 test_queue: $(TEST_QUEUE_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(TEST_QUEUE_OBJS) -o $@ \
+	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
+	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
+	@$(CHMOD) 750 $@
+
+test_task: $(TEST_TASK_OBJS)
+	@$(ECHO) "\n*** Target: $@ (linking)"
+	$(CC) $(LINK_FLAGS) $(CINCL) $(TEST_TASK_OBJS) -o $@ \
 	    -L$(CGTOLIBDIR) -L$(MQMLIBDIR) -L$(ORALIBDIR) \
 	    -l$(LIBCGTO) -l$(LIBMQM) -l$(LIBORA) -l$(LIBPTHREAD)
 	@$(CHMOD) 750 $@
