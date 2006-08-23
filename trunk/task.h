@@ -23,8 +23,8 @@
 
 #include "util.h"
 
-#define INITIAL_NUM_TASKS 5
-#define NUM_TASKS_INCREMENT 5
+#define INITIAL_NUM_TASK_TS 5
+#define NUM_TASK_TS_INCREMENT 5
 #define TIME_LEN 8
 
 /* Configuration file names */
@@ -53,54 +53,69 @@
 #define FILE_LINE_SIZE 180
 
 /* enums */
-typedef enum {kill=1, replace, kill_program} thread_action;
-typedef enum {increase=1,decrease} work_load_type;
-typedef enum {add=1, sub} work_load_action;
+typedef enum {kill_it=1, replace, kill_program} thread_action;
+typedef enum {increase=4,decrease} work_load_type;
+typedef enum {add=6, sub} work_load_action;
 
 
 /* structs */
-struct work_load {
+struct work_load_struct {
   work_load_type   type;
   work_load_action action;
   int  upper_bound;
   int  lower_bound;
   int  value;
 };
+typedef struct work_load_struct WORK_LOAD;
 
-struct task {
+struct sched_struct {
+  struct tm start;
+  int repeat;
+};
+typedef struct sched_struct SCHEDULE;
+
+typedef struct task_struct {
   int id;
   char interval[TIME_LEN + 1];
-  int _interval;
+  long _interval;
 
   thread_action dead_thread_action;
-  struct work_load load_increase;
-  struct work_load load_decrease;
-  void *(function_ptr)(); 
-};
+  struct work_load_struct load_increase;
+  struct work_load_struct load_decrease;
+  void*(*function_ptr)();
 
-typedef struct work_load WORK_LOAD;
-typedef struct task TASK;
+  struct sched_struct schedule;
+};
+typedef struct task_struct TASK_T;
+
 
 /* Public Methods */
 void init_tasks(int num_tasks);
 void init_tasks_default();
-BOOL add_task(TASK *task);
-BOOL add_tasks_by_file(char *filename);
-BOOL remove_task();
+TASK_T *get_init_task();
+void destroy_task(TASK_T *task);
+void destroy_all_tasks();
+int  add_task(TASK_T *task);
+int  add_tasks_by_file(char *filename);
+int  remove_task();
 void set_id_byid(int id, int new_id);
-void set_id(TASK *task , int new_id);
+void set_id(TASK_T *task , int new_id);
 void set_interval_byid(int id, char *interval);
-void set_interval_byid(TASK *task, char *interval);
+void set_interval(TASK_T *task, char *interval);
 void set_dead_thread_action_byid(int id, thread_action action);
-void set_dead_thread_action(TASK *task, thread_action action);
+void set_dead_thread_action(TASK_T *task, thread_action action);
 void set_work_load_action_byid(int id, work_load_type type, work_load_action action);
-void set_work_load_action(TASK *task, work_load_type type, work_load_action action);
+void set_work_load_action(TASK_T *task, work_load_type type, work_load_action action);
 void set_work_load_upper_bound_byid(int id, work_load_type type, int bound);
-void set_work_load_upper_bound(TASK *task, work_load_type type, int bound);
+void set_work_load_upper_bound(TASK_T *task, work_load_type type, int bound);
 void set_work_load_lower_bound_byid(int id, work_load_type type, int bound);
-void set_work_load_lower_bound(TASK *task, work_load_type type, int bound);
-void set_function_ptr_byid(int id, FUNC_PTR ptr);
-void set_function_ptr_byid(TASK *task, FUNC_PTR ptr);
-
+void set_work_load_lower_bound(TASK_T *task, work_load_type type, int bound);
+void set_work_load_value_byid(int id, work_load_type type, int value);
+void set_work_load_value(TASK_T *task, work_load_type type, int value);
+void set_function_ptr_byid(int id, void *(*ptr)() );
+void set_function_ptr(TASK_T *task, void *(*ptr)() );
+void set_schedule_byid(int id, struct tm *time, int repeat);
+void set_schedule(TASK_T *task, struct tm *time, int repeat);
+int quick_sort_tasks(TASK_T *arr, int elements);
 
 #endif
