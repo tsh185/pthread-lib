@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+/*! @file multi_thread.c
+    @brief A set of classes and wrappers to make using the pthread library easy
+*/
+
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>

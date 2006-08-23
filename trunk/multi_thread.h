@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+/*! @file multi_thread.h
+    @brief The header file to multi_thread.c 
+*/
+
 #ifndef __MULTI_THREAD_H__
 #define __MULTI_THREAD_H__
 
@@ -28,7 +32,7 @@
 #define ERROR_CODE_SIG_HANDLER_NO_FUNCTIONS 2
 
 
-/* Thread Operations */
+/* Public Methods */
 pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads);
 void join_threads(int *t_status);
 void check_status(int status, char *api, char *msg);
