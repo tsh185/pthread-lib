@@ -25,7 +25,6 @@
 #include "util.h"
 
 /* Error Codes */
-#define ERROR_CODE_MALLOC 1
 #define ERROR_CODE_SIG_HANDLER_NO_FUNCTIONS 2
 
 
