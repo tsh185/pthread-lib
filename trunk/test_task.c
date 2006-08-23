@@ -18,6 +18,10 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
+/*! @file test_task.c
+    @brief A set of tests for task.c
+*/
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -27,7 +31,7 @@
 #include "util.h"
 #include "task.h"
 
-#define NUM_TESTS 2
+#define NUM_TESTS 3
 void *do_something(){
   printf("This if the function assigned to a task\n");
 }
@@ -100,6 +104,44 @@ BOOL test_1(){
   return rc;
 }
 
+BOOL test_2(){
+  const char* m = "test_2: ";
+  BOOL rc = TRUE;
+
+  init_tasks(10);
+  TASK_T *task1 = get_init_task();
+  TASK_T *task2 = get_init_task();
+  TASK_T *task3 = get_init_task();
+  TASK_T *task4 = get_init_task();
+
+  add_task(task1);
+  add_task(task2);
+  add_task(task3);
+  add_task(task4);
+
+  int size = get_size();
+  if(size != 4){
+    printf("%s size does not match. size [%d]\n",m,size);
+    rc = FALSE;
+  }
+
+  remove_task();
+  remove_task();
+
+  if(size != 2){
+    printf("%s size does not match after removal. size [%d]\n",m,size);
+    rc = FALSE;
+  }
+
+  destroy_task(task1);
+  destroy_task(task2);
+  destroy_task(task3);
+  destroy_task(task4);
+  destroy_all_tasks();
+
+  return rc;
+}
+
 int main(){
   int results[NUM_TESTS];
   memset(&results,0,sizeof(int)*NUM_TESTS);
@@ -109,6 +151,9 @@ int main(){
 
   results[1] = test_1();
   CHECK_TEST(1, results[1]);
+
+  results[2] = test_1();
+  CHECK_TEST(2, results[2]);
 
   int i;
   for(i=0; i<NUM_TESTS; i++){
