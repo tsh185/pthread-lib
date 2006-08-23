@@ -43,9 +43,16 @@ typedef void (*FUNC_PTR)();
 
 #define CHECK_TEST(num,result){if(!result){printf("Test %d failed\n", num);} }
 
+#define GET_LINE(file,line,line_size,str,val,delim,delim2,sp){ fgets(line,(line_size),file); str=strtok_r(line,delim,&sp); if(!str){continue;} val=strtok_r(NULL, delim2, sp); }
+/* strcat that concatenates all the chars it can */
+#define STR_CAT(dest,src,max) { int _s = strlen(dest)+strlen(src); if(_s < max){ strcat(dest,src);} else {strncat(dest,src,(max-_s));} }
+
 
 /* General Error Codes */
 #define ERROR_CODE_MALLOC 1
+
+
 /* Public Functions */
+int is_digit(char *str);
 
 #endif

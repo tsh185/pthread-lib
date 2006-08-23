@@ -22,3 +22,28 @@
 #include <stdio.h>
 #include <string.h>
 #include "util.h"
+
+/*****************************************************************************/
+/*! 
+*/
+/*****************************************************************************/
+int is_digit(char *str){
+  int i = 0;
+  int len = 0;
+  int result = 1;
+
+  if(!str){
+    return !result;
+  }
+
+  len = strlen(str);
+
+  for(i=0; i < len; i++){
+    if(!isdigit(str[i])){
+      result = 0;
+      break;
+    }
+  }
+
+  return result;
+}
