@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <libgen.h>
 #include "task.h"
+#include "util.h"
 
 /* Global Variables */
 TASK_T *tasks = NULL;
@@ -34,11 +35,19 @@ int next_empty_index = NULL;
 int size;
 
 /* Private Functions */
-void _copy_tm(struct tm *dest_time, struct tm *src_time);
 void _copy_task(TASK_T *dest_task, TASK_T *src_task);
+void _copy_tm(struct tm *dest_time, struct tm *src_time);
 void _resize_tasks();
-int _get_time_from_string(char *string);
-int _get_task_by_id(int id);
+long _get_time_from_string(char *string);
+int  _get_task_by_id(int id);
+void _copy_work_to_task(WORK_LOAD *work, TASK_T *task, work_load_type type );
+void _copy_sched_to_task(SCHEDULE *shed, TASK_T *task);
+int  _validate_schedule(SCHEDULE *sched);
+int  _validate_interval(char *interval);
+int  _validate_thread_action(thread_action ta);
+int  _validate_work_load(WORK_LOAD *work);
+void print_task(TASK_T *task);
+void print_tm(struct tm *t);
 
 /*****************************************************************************/
 /*! @fn void init_task(int num_tasks);
@@ -114,11 +123,11 @@ void destroy_all_tasks(){
 }
 
 /*****************************************************************************/
-/*! @fn BOOL add_task(TASK_T *task)
+/*! @fn int add_task(TASK_T *task)
     @brief Copies the task from source into the next available spot
 */
 /*****************************************************************************/
-BOOL add_task(TASK_T *task){
+int add_task(TASK_T *task){
   if(task == NULL){
     return FALSE;
   }
@@ -142,28 +151,29 @@ BOOL add_task(TASK_T *task){
     See the documentation on how to create a task configuration file.
 */
 /*****************************************************************************/
-char *add_tasks_by_file(char *filename){
+char *add_tasks_by_file(char *filename, char *error, int error_length){
+  const char *METHOD_NM = "add_tasks_by_file: ";
   char line[FILE_LINE_SIZE + 1];
   char *str = NULL;
   char *val = NULL;
   char *sp = NULL;
-  const char *delim = "=\0";
-  const char *delim2 = "# \t\r\n\0";
   int num_blank_lines = NUM_BLANK_LINES; 
   int i,j,k,l;
   char errors[NUM_ERROR_CHARS+1];
   char buf[BUFSIZ];
   int num_tasks = 0;
   int error_reading_task = FALSE;
+  char *ptr_to_errors = NULL;
+  char *tmp_val = NULL;
+  char *tmp_str = NULL;
 
   memset(errors, 0 , NUM_ERROR_CHARS+1);
   memset(buf, 0 , BUFSIZ);
+  memset(line,0, sizeof(line));
 
-  sprintf(errors, "Errors while parsing file %s:\n", filename);
-
-  if(filename == NULL){
+  if(filename == NULL || error == NULL){
     STR_CAT(errors,"filename passed in is NULL.\n", sizeof(errors));
-    strcat(errors,"filename passed in is NULL.\n");
+    strncpy(error,errors,error_length);
     return errors;
   }
 
@@ -171,33 +181,60 @@ char *add_tasks_by_file(char *filename){
   task_file = fopen(filename, READ);
 
   if(task_file == NULL){
-    STR_CAT(errors,"file can not be opened.\n", sizeof(errors));
+    sprintf(buf,"file [%s] can not be opened.\n",filename);
+    STR_CAT(errors,buf, sizeof(errors));
+    memset(buf,0,sizeof(buf));
     return errors;
   }
 
-  while(!feof(config_file)){
+#ifdef DEBUG
+printf("%s file %s was opened successfully\n",METHOD_NM, filename);
+#endif
 
-    GET_LINE(task_file, line, FILE_LINE_SIZE, str, val, delim, delim2, &sp);
+  while(!feof(task_file)){
+
+    GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str);
+
+    printf("%s line is [%s]\n",METHOD_NM,line); 
+    printf("%s str is [%s]\n",METHOD_NM,str);
+    printf("%s val is [%s]\n\n",METHOD_NM,val);
+
     if(strcasecmp(str,TASK) == 0){
       num_tasks++;
       TASK_T task;
-      memset(&task, 0, sizeof(task));
+      memset(&task, 0, sizeof(TASK_T));
+#ifdef DEBUG
+      printf("%s found a task defintion - %s\n",METHOD_NM,str);
+#endif
 
       for(i=0; i<NUM_TASK_DEFINITIONS; i++){
         /* Interval */
         if(strcasecmp(str, INTERVAL) == 0){
-          task.interval = val;  
-
+          strncpy(task.interval, val, TIME_LEN);  
+#ifdef DEBUG
+          printf("%s found interval %s\n",METHOD_NM,val);
+#endif
+         /* also copies interval to task variable */
           _validate_interval(task.interval);
         }
 
 
         /* thread action: action */
         else if(strcasecmp(str, THREAD_ACTION) == 0){
+
+#ifdef DEBUG
+  printf("%s found thread_action %s\n",METHOD_NM,str);
+#endif
           int itr = num_blank_lines;
           /* Specific fields */
           for(j=0; j<NUM_THREAD_ACTION_DEFINTIONS; j++){
+
+            GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str);
+
             if(strcasecmp(str, ACTION) == 0){
+#ifdef DEBUG
+              printf("%s got dead.thread.action %s\n",METHOD_NM,val);
+#endif
               /* actions: kill_it, replace, kill_program */
               if(strcasecmp(val, KILL) == 0){
                 task.dead_thread_action = kill_it;
@@ -220,18 +257,27 @@ char *add_tasks_by_file(char *filename){
             }
           }/* end for (j) loop */
 
-        _validate_thread_action(task.dead_thread_action);
+          /* No need to validate */
 
         }/* end if THREAD_ACTION */
 
 
         /* work load: type, bounds, action, value */
-        else if(strcasecmp(str, WORK_LOAD) == 0){
+        else if(strcasecmp(str, WORK_LOAD_CHAR) == 0){
+#ifdef DEBUG
+  printf("%s Got work_load %s\n",METHOD_NM,str);
+#endif
 
           WORK_LOAD work;
           for(k=0; k<NUM_WORK_LOAD_DEFINITIONS; k++){
+
+            GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str); 
+
             /* types: increase, decrease */
             if(strcasecmp(str, TYPE) == 0){
+#ifdef DEBUG
+              printf("%s found type %s\n",METHOD_NM,val);
+#endif
               if(strcasecmp(val, INCREASE) == 0){
                 work.type=increase;
               }
@@ -246,19 +292,36 @@ char *add_tasks_by_file(char *filename){
 
             }
             /* bounds: any integer */
-            else if(strcasecmp(str, BOUNDS) == 0){
+            else if(strcasecmp(str, UPPER_BOUND) == 0){
+#ifdef DEBUG
+              printf("%s found upper bound %s\n",METHOD_NM,val);
+#endif
               if(is_digit(str)){
-                work.bounds = taskatoi(val);
+                work.upper_bound = atoi(val);
               } else {
-                sprintf(buf,"Expected an integer next to the bounds tag. Got [%s] instead\n", val);
+                sprintf(buf,"Expected an integer next to the upper.bound tag. Got [%s] instead\n", val);
+                STR_CAT(errors,buf,sizeof(errors));
+                memset(buf,0,sizeof(buf));
+              }
+            }
+            else if(strcasecmp(str,LOWER_BOUND) == 0){
+#ifdef DEBUG
+              printf("%s found lower bound %s\n",METHOD_NM,val);
+#endif
+              if(is_digit(str)){
+                work.lower_bound = atoi(val);
+              } else {
+                sprintf(buf,"Expected an integer next to the lower.bound tag. Got [%s] instead\n", val);
                 STR_CAT(errors,buf,sizeof(errors));
                 memset(buf,0,sizeof(buf));
               }
             }
             /* work load action: add, sub */ 
-            else if(strcasecmp(str, WORK_LOAD_ACTION) == 0){
-              if(strcasecmp(val, ADD) == 0 ||
-                 strcasecmp(val, ADD_LONG) == 0){
+            else if(strcasecmp(str, ACTION) == 0){
+#ifdef DEBUG
+              printf("%s found action %s\n",METHOD_NM,val);
+#endif
+              if(strcasecmp(val, ADD) == 0 ){
                 work.action = add;
               } 
               else if(strcasecmp(val, SUB) == 0 ||
@@ -268,11 +331,14 @@ char *add_tasks_by_file(char *filename){
               else {
                 sprintf(buf,"Expected a value next to the type tag. Got [%s] instead\n",val);
                 STR_CAT(errors,buf,sizeof(errors));
-                memset(buf,0,sizof(buf));
+                memset(buf,0,sizeof(buf));
               }
             }
             /* value: any integer */
             else if(strcasecmp(str, VALUE) == 0){
+#ifdef DEBUG
+              printf("%s found value %s\n",METHOD_NM,val);
+#endif
               if(is_digit(val)){
                 work.value = atoi(val); 
               } 
@@ -289,24 +355,49 @@ char *add_tasks_by_file(char *filename){
           }/* end for work_load loop */
 
         _validate_work_load(&work);
-        _copy_work_to_task(&task, &work);
+
+#ifdef DEBUG
+  printf("%s work_load done validating \n",METHOD_NM);
+#endif
+        if(work.type == increase){
+          _copy_work_to_task(&work, &task, increase);
+        } 
+        else if(work.type == decrease){
+          _copy_work_to_task(&work, &task, decrease);
+        } 
+        else {
+          sprintf(buf,"Can't tell what kind of work (increase/decrease) to add it to the task. type [%d] instead,\n", work.type);
+          STR_CAT(errors,buf,sizeof(errors));
+          memset(buf,0,sizeof(buf));
+        }
 
         }/* end if work_load tag */
 
 
         /* schedule: start, repeat */
-        else if(strcasecmp(str, SCHEDULE) == 0){
+        else if(strcasecmp(str, SCHEDULE_CHAR) == 0){
           SCHEDULE sched;
-
+#ifdef DEBUG
+        printf("%s Found schedule %s\n",METHOD_NM, str);
+#endif
           for(l=0; l<NUM_SCHEDULE_DEFINITIONS; l++){
+
+            GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str);
+
             if(strcasecmp(str,START) == 0){
-              sched.start_char = val;     
+#ifdef DEBUG
+              printf("%s found start date/time %s\n",METHOD_NM,val);
+#endif
+              strncpy(sched.start_char, val, sizeof(char)* DATE_TIME_LEN);     
             }
             else if(strcasecmp(str, REPEAT) == 0){
-              if(strcasecmp(val,"true") == 0){
+#ifdef DEBUG
+              printf("%s found repeat %s\n",METHOD_NM,val);
+#endif
+              if(strcasecmp(val, TRUE_CHAR) == 0){
                 sched.repeat = TRUE;
               }
-              else if(strcasecmp(val,"false") == 0){
+              else if(strcasecmp(val, FALSE_CHAR) == 0){
                 sched.repeat = FALSE;
               }
               else {
@@ -324,7 +415,7 @@ char *add_tasks_by_file(char *filename){
           }/* end for schedule */
 
           _validate_schedule(&sched);
-          _copy_sched_to_task(&task, &sched);
+          _copy_sched_to_task(&sched, &task);
 
         }/* end if schedule tag */ 
         else {
@@ -334,26 +425,44 @@ char *add_tasks_by_file(char *filename){
         }
 
       }/* end for loop - task tag */
-    }/* end if task tag */
 
-    /* add the task to the queue of tasks */
-    if(!error_reading_task){
-      add_task(&task);
+      /* add the task to the queue of tasks */
+
 #ifdef DEBUG
-     printf("Added task number %d\n",num_tasks);
+      printf("Printing task before it is added\n");
+      print_task(&task);
 #endif
-    } else {
-      sprintf(buf,"Not able to add task number %d. See errors for more information\n",num_tasks);
-      STR_CAT(errors,buf,sizeof(errors));
-      memset(buf,0,sizeof(buf));
-    }
+      if(!error_reading_task){
+        add_task(&task);
+#ifdef DEBUG
+       printf("Added task number %d\n",num_tasks);
+#endif
+      } else {
+#ifdef DEBUG
+        printf("%s Unable to add task b/c there was an error reading the task",METHOD_NM);
+#endif
+        sprintf(buf,"Not able to add task number %d. See errors for more information\n",num_tasks);
+        STR_CAT(errors,buf,sizeof(errors));
+        memset(buf,0,sizeof(buf));
+      }
+
+    }/* end if task tag */
   }/* end while not end of file */
 
+#ifdef DEBUG
+  printf("%s Done parsing the file %s\n",METHOD_NM,filename);
+#endif
 
-  if(errors[1] != '\0'){
+  /* Copy errors to string given */
+  if(errors[0] != '\0'){
+#ifdef DEBUG
+    printf("%s found errors, going to copy to variable\n", METHOD_NM);
+#endif
      sprintf(buf, "Errors while parsing file %s\n", filename);
      STR_CAT(errors, buf, sizeof(errors));
      memset(buf,0,sizeof(buf));
+     strncpy(error, errors, sizeof(int)*error_length-1);
+     ptr_to_errors = error;
   }
 
   /* close the file */
@@ -361,20 +470,22 @@ char *add_tasks_by_file(char *filename){
     fclose(task_file);
   }
 
-  return TRUE;
+  return ptr_to_errors;
+
 }
 
 /*****************************************************************************/
-/*! @fn BOOL remove_task()
+/*! @fn int remove_task()
     @brief Removes the last task from \a tasks
 */
 /*****************************************************************************/
-BOOL remove_task(){
+int remove_task(){
   if(size <= 0){
     return FALSE;
   }
 
   memset(&tasks[--next_empty_index],0,sizeof(TASK_T));
+  size--;
 
   return TRUE;
 }
@@ -382,7 +493,7 @@ BOOL remove_task(){
 void sort_tasks_by_time(){
   const char *METHOD_NM = "sort_tasks_by_time: ";
 
-  BOOL rc = quick_sort_tasks(&tasks[0], capacity);
+  int rc = quick_sort_tasks(&tasks[0], capacity);
 
   if(!rc){
     LOG_ERROR(METHOD_NM, "Reached max level in quick sort algorithm");
@@ -716,15 +827,15 @@ void set_function_ptr(TASK_T *task, void *(*ptr)() ){
 }
 
 /*****************************************************************************/
-/*! @fn void set_schedule_byid(int id, struct tm *time, BOOL repeat)
+/*! @fn void set_schedule_byid(int id, struct tm *time, int repeat)
     @brief Sets the schedule of the task
     @param int id Id of the task to be changed
     @param struct tm *time Time that the task will start
-    @param BOOL repeat Will task repeat?
+    @param int repeat Will task repeat?
 
 */
 /*****************************************************************************/
-void set_schedule_byid(int id, struct tm *time, BOOL repeat){
+void set_schedule_byid(int id, struct tm *time, int repeat){
 
   int index = _get_task_by_id(id);
   _copy_tm(&(tasks[index].schedule.start), time);
@@ -732,15 +843,15 @@ void set_schedule_byid(int id, struct tm *time, BOOL repeat){
 }
 
 /*****************************************************************************/
-/*! @fn void set_schedule(TASK_T *task, struct tm *time, BOOL repeat)
+/*! @fn void set_schedule(TASK_T *task, struct tm *time, int repeat)
     @brief Sets the schedule of the task
     @param TASK_T *task Task to be changed
     @param struct tm *time Time the task will start
-    @param BOOL repeat Will task repeat?
+    @param int repeat Will task repeat?
 
 */
 /*****************************************************************************/
-void set_schedule(TASK_T *task, struct tm *time, BOOL repeat){
+void set_schedule(TASK_T *task, struct tm *time, int repeat){
   _copy_tm(&(task->schedule.start),time);
   task->schedule.repeat = repeat;
 }
@@ -774,6 +885,7 @@ int get_capacity(){
     @param TASK_T *src_task  Source task
 
     A full memory copy from src to dest.
+    This is a private function.
 */
 /*****************************************************************************/
 void _copy_task(TASK_T *dest_task, TASK_T *src_task){
@@ -787,7 +899,8 @@ void _copy_task(TASK_T *dest_task, TASK_T *src_task){
     @param struct tm *dest_time Destination time
     @param struct tm *src_time  Source time
 
-    A full memory copy from src to dest
+    A full memory copy from src to dest.
+    This is a private function.
 */
 /*****************************************************************************/
 void _copy_tm(struct tm *dest_time, struct tm *src_time){
@@ -798,6 +911,8 @@ void _copy_tm(struct tm *dest_time, struct tm *src_time){
 /*****************************************************************************/
 /*! @fn void _resize_tasks()
     @brief Resizes the array of tasks
+
+    This is a private function.
 */
 /*****************************************************************************/
 void _resize_tasks(){
@@ -822,9 +937,11 @@ void _resize_tasks(){
 /*! @fn int get_time_from_string(char *string)
     @brief Parses a string of the form HH:MM:SS and returns it in mins past midnight
     @param char *string Date to be parsed
+
+    This is a private function.
  */
 /*****************************************************************************/
-int _get_time_from_string(char *string){
+long _get_time_from_string(char *string){
   int hour = 0;
   int min = 0;
   int sec = 0;
@@ -846,13 +963,15 @@ int _get_time_from_string(char *string){
   str = strtok_r(NULL, delim, &sp);
   if(str) sec = atoi(str);
 
-  return ((hour*60)+min);
+  return (long)(hour*120)+(min*60)+(sec);
 }
 
 /*****************************************************************************/
 /*! @fn int _get_task_by_id(int id)
     @brief Looks for given id in the \a tasks arraa
     @param int id Id to look for
+
+    This is a private function.
 */
 /*****************************************************************************/
 int _get_task_by_id(int id){
@@ -867,20 +986,235 @@ int _get_task_by_id(int id){
 }
 
 /*****************************************************************************/
-/*!
+/*! @fn void _copy_work_to_task(WORK_LOAD *work, TASK_T *task, work_load_type type )
+    @breif Copies a work struct to the task struct 
+    @param WORK_LOAD *work Work load to be copied
+    @param TASK_T *task Task for the work load to be cpied
+    @param work_load_type type Increase or decrease
+
+    This is a private function.
 
 */
 /*****************************************************************************/
-int _handle_config_element(char *tag, char *value, char *source, char **sp){
-  if(!tag){
+void _copy_work_to_task(WORK_LOAD *work, TASK_T *task, work_load_type type ){
+  if(work == NULL || task == NULL){
     return;
   }
 
-  /* found a task element */
-  if(strcasecmp(str,TASK) == 0){
+  if(type == increase){
+    memcpy(&(task->load_increase), work, sizeof(WORK_LOAD));
+  } 
+  else if(type == decrease){
+    memcpy(&(task->load_decrease), work, sizeof(WORK_LOAD));
+  } 
 
+  return;
+}
+
+/*****************************************************************************/
+/*! @fn void _copy_sched_to_task(SCHEDULE *shed, TASK *task)
+    @brief Copy the schedule to the task
+    @param SCHEDULE *sched Schedule to be copied
+    @param TASK_T *task Task the schedule will be copied to.
+
+    This is a private function.
+*/
+/*****************************************************************************/
+void _copy_sched_to_task(SCHEDULE *sched, TASK_T *task){
+  if(sched == NULL || task == NULL){
+    return;
   }
 
+  memcpy(&(task->schedule), sched, sizeof(SCHEDULE));
+
+  return;
+}
+
+/*****************************************************************************/
+/*! @fn int _validate_schedule(TASK_T *task, SCHEDULE *sched)
+    @brief Validates the schedule element and assings the start_char to start
+    @param SCHEDULE *sched Schedule to be validated
+
+    This is a private function.
+*/
+/*****************************************************************************/
+int _validate_schedule(SCHEDULE *sched){
+  char *sp = NULL;
+  char *date = NULL;
+  char *t = NULL;
+  const char *delim = " ";
+  const char *delim2 = "-";
+  const char *delim3 = ":";
+  char *string = NULL;
+  char *year = NULL;
+  char *month = NULL;
+  char *day = NULL;
+  char *hour = NULL;
+  char *min = NULL;
+  char *sec = NULL;
+  int rc = TRUE;
+
+  if(sched == NULL){
+    return FALSE;
+  }
+
+  if(sched->start_char[0] == '\0'){
+    return FALSE;
+  }
+
+  string = sched->start_char;
+
+  /* split the date and time up. Should be seperated by a space */
+  date = strtok_r(string, delim, &sp);
+  t = strtok_r(NULL, delim, &sp);
+
+  /* if date or time is null, this is not valid */
+  if(date == NULL || t == NULL){
+    return FALSE;
+  }
+
+
+
+  /* get the date */
+  year = strtok_r(date, delim2, &sp);
+  if(is_digit(year)) { sched->start.tm_year = atoi(year); } else { rc = FALSE; } 
+
+  month = strtok_r(NULL, delim2, &sp);
+  if(is_digit(month)) { sched->start.tm_mon = atoi(month); } else { rc = FALSE; }
+
+  day = strtok_r(NULL, delim2, &sp);
+  if(is_digit(day)) { sched->start.tm_mday = atoi(day); } else { rc = FALSE; }
+
+  /* get the time */
+  hour = strtok_r(t, delim3, &sp);
+  if(is_digit(hour)) { sched->start.tm_hour = atoi(hour); } else { rc = FALSE; }
+
+  min = strtok_r(NULL, delim3, &sp);
+  if(is_digit(min)) { sched->start.tm_min = atoi(min); } else { rc = FALSE; }
+
+  sec = strtok_r(NULL, delim3, &sp);
+  if(is_digit(sec)) { sched->start.tm_sec = atoi(sec); } else { rc = FALSE; }
+
+  /* validate repeat */
+  if(sched->repeat != FALSE || sched->repeat != TRUE){
+    rc = FALSE;
+  }
+
+  return rc;
+}
+
+/*****************************************************************************/
+/*! @fn int _validate_interval(TASK_T *task, char *interval)
+    @brief Validats the interval given
+    @param TASK_T *task Task to be assigned the interval in long form
+    @param char *interval String of chars to be validated
+
+    Returns true if valid, false otherwise.
+    If task is not null, then \a _interval
+    is assigned that value in seconds.  Otherwise, task is not used.
+
+    This is a private function.
+
+*/
+/*****************************************************************************/
+int _validate_interval(char *interval){
+  if(interval == NULL){
+    return FALSE;
+  }
+
+  long t =_get_time_from_string(interval);
+
+  if(t < 0){
+    return FALSE;
+  }
+
+  return TRUE;
+}
+
+/*****************************************************************************/
+/*! @fn int _validate_thread_action(thread_action ta)
+    @brief Validates the thread action
+    @param thread_action ta Thread action to be validated
+
+    Returns true if valid, false otherwise.
+    This is a private functions.
+*/
+/*****************************************************************************/
+int _validate_thread_action(thread_action ta){
+  if(ta == kill_it || ta == replace || ta == kill_program){
+    return TRUE;
+  }
+
+  return FALSE;
+}
+
+/*****************************************************************************/
+/*! @fn int _validate_work_load(WORK_LOAD *work)
+    @brief Validates the work load
+    @param WORK *work Work load to be Validated.
+
+    Returns true if valid, false otherwise.
+    This is a private function.
+*/
+/*****************************************************************************/
+int _validate_work_load(WORK_LOAD *work){
+  int rc = TRUE;
+
+  if(work == NULL){
+    return FALSE;
+  }
+
+  if(work->value <= 0 || work->upper_bound <= 0 || work->lower_bound <= 0){
+    rc = FALSE;
+  }
+
+  return rc;
+}
+
+void print_task(TASK_T *task){
+  if(task == NULL){
+    return;
+  }
+
+  const char *METHOD_NM = "print_task: ";
+
+  printf("==========================================================\n");
+  printf("id [%d]\n",task->id);
+  printf("interval [%s]\n",task->interval);
+  printf("_interval [%d]\n",task->_interval);
+  printf("dead_thread_action [%d]\n", task->dead_thread_action);
+
+  printf("load_increase\n");
+  printf("\ttype [%d]\n",task->load_increase.type);
+  printf("\taction [%d]\n",task->load_increase.action);
+  printf("\tupper_bound [%d]\n", task->load_increase.upper_bound);
+  printf("\tlower_bound [%d]\n", task->load_increase.lower_bound);
+  printf("\tvalue [%d]\n", task->load_increase.value);
+
+  printf("load_decrease\n");
+  printf("\ttype [%d]\n",task->load_decrease.type);
+  printf("\taction [%d]\n",task->load_decrease.action);
+  printf("\tupper_bound [%d]\n", task->load_decrease.upper_bound);
+  printf("\tlower_bound [%d]\n", task->load_decrease.lower_bound);
+  printf("\tvalue [%d]\n", task->load_decrease.value);
+
+  printf("Function Pointer null? [%d]\n",(task->function_ptr == NULL));
+
+  printf("schedule\n");
+  printf("\tstart_char [%s]\n", task->schedule.start_char);
+  printf("\tstart\n");
+  print_tm(&(task->schedule.start));
+  printf("\trepeat [%d]\n",task->schedule.repeat);
+  printf("==========================================================\n");
+}
+
+void print_tm(struct tm *t){
+  printf("\t\tsec [%d]\n",t->tm_sec);
+  printf("\t\tmin [%d]\n",t->tm_min);
+  printf("\t\thour [%d]\n", t->tm_hour);
+  printf("\t\tday [%d]\n",t->tm_mday);
+  printf("\t\tmonth [%d]\n",t->tm_mon);
+  printf("\t\tyear [%d]\n",t->tm_year);
 }
 
 /*****************************************************************************/

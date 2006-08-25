@@ -27,7 +27,6 @@
 
 #define DEFAULT_Q_SIZE 100
 #define THREAD_SAFE
-#define DEBUG
 
 int nulls_ok = 0;
 

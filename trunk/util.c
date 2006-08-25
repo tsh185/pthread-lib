@@ -47,3 +47,43 @@ int is_digit(char *str){
 
   return result;
 }
+
+/*****************************************************************************/
+/*****************************************************************************/
+char *strip_leading_blanks(char *str) {
+  if(str == NULL){
+    return NULL;
+  }
+
+  char *p = str;
+  
+  while(*p && isspace(*p))
+    p++;
+    
+  return p;
+}
+
+/*****************************************************************************/
+/*****************************************************************************/
+void strip_trailing_blanks(char *str) {
+  if(str == NULL){
+    return;
+  }
+  long l = strlen(str) - 1;
+  char *p;
+  
+  p = &str[l];
+  
+  while(p >= str && isspace(*p))
+    *p-- = 0;
+}
+
+/*****************************************************************************/
+/*****************************************************************************/
+char *strip_whitespace(char *str) {
+  if(str == NULL){
+    return NULL;
+  }
+  strip_trailing_blanks(str);
+  return strip_leading_blanks(str);
+}

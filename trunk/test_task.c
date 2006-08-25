@@ -30,8 +30,10 @@
 #include <time.h>
 #include "util.h"
 #include "task.h"
+#include "debug.h"
 
-#define NUM_TESTS 3
+#define NUM_TESTS 4
+
 void *do_something(){
   printf("This if the function assigned to a task\n");
 }
@@ -128,6 +130,7 @@ BOOL test_2(){
   remove_task();
   remove_task();
 
+  size = get_size();
   if(size != 2){
     printf("%s size does not match after removal. size [%d]\n",m,size);
     rc = FALSE;
@@ -142,6 +145,40 @@ BOOL test_2(){
   return rc;
 }
 
+BOOL test_3(){
+  const char *METHOD_NM = "test_3: ";
+  BOOL rc = TRUE;
+
+  char error[512];
+  memset(error,0,512);
+
+  init_tasks(5);
+
+#ifdef DEBUG
+  printf("%s done init tasks\n",METHOD_NM);
+#endif
+
+  char *e = add_tasks_by_file("./task.config", error, 512);
+
+#ifdef DEBUG
+  printf("%s done add_tasks_by_file\n",METHOD_NM);
+#endif
+
+  if(e != NULL){
+    printf("%s did not successfully add the task(s) from file\n",METHOD_NM);
+    printf("%s Errors - %s",METHOD_NM, e);
+    rc = FALSE;
+  }
+
+  int size = get_size();
+  if(size != 1){
+    printf("size does not match. size [%d]\n",size);
+    rc = FALSE;
+  }
+
+  return rc;
+}
+
 int main(){
   int results[NUM_TESTS];
   memset(&results,0,sizeof(int)*NUM_TESTS);
@@ -152,8 +189,11 @@ int main(){
   results[1] = test_1();
   CHECK_TEST(1, results[1]);
 
-  results[2] = test_1();
+  results[2] = test_2();
   CHECK_TEST(2, results[2]);
+
+  results[3] = test_3();
+  CHECK_TEST(3, results[3]);
 
   int i;
   for(i=0; i<NUM_TESTS; i++){

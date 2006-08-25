@@ -47,20 +47,33 @@
 #define REPLACE "replace"
 #define KILL_PROGRAM "kill.program"
 
-#define WORK_LOAD_INCREASE "work.load.increase"
-#define WORK_LOAD_DECREASE "work.load.decrease"
+#define INCREASE "increase"
+#define DECREASE "decrease"
+#define WORK_LOAD_CHAR "work.load"
 #define ADD "add"
 #define SUB "sub"
+#define SUB_LONG "subtract"
 #define VALUE "value"
 
 #define ACTION "action"
 #define BOUNDS "bounds"
-#define GREATER ">"
-#define LESS "<"
+#define UPPER_BOUND "upper.bound"
+#define LOWER_BOUND "lower.bound"
+#define TYPE "type"
+
+#define START "start"
+#define REPEAT "repeat"
+
+#define SCHEDULE_CHAR "schedule"
+
+#define TRUE_CHAR "true"
+#define FALSE_CHAR "false"
 
 #define INTERNAL_CONFIG_FILENAME "thread_manager.config"
 #define READ "r"
 #define FILE_LINE_SIZE 180
+#define TASK_DELIM "=\n\0"
+#define TASK_DELIM2 "# \t\r\n\0"
 
 /* enums */
 typedef enum {kill_it=1, replace, kill_program} thread_action;
@@ -79,7 +92,7 @@ struct work_load_struct {
 typedef struct work_load_struct WORK_LOAD;
 
 struct sched_struct {
-  char start_char[DATE_TIME_LEN + 1];
+  char start_char[DATE_TIME_LEN + 1]; /* YYYY-MM-DD HH:MM:SS */
   struct tm start;
   int repeat;
 };
@@ -87,8 +100,8 @@ typedef struct sched_struct SCHEDULE;
 
 typedef struct task_struct {
   int id;
-  char interval[TIME_LEN + 1];
-  long _interval;
+  char interval[TIME_LEN + 1]; /* HH:MM:SS */
+  long _interval;              /* seconds */
 
   thread_action dead_thread_action;
   struct work_load_struct load_increase;
@@ -107,7 +120,7 @@ TASK_T *get_init_task();
 void destroy_task(TASK_T *task);
 void destroy_all_tasks();
 int  add_task(TASK_T *task);
-int  add_tasks_by_file(char *filename);
+char *add_tasks_by_file(char *filename, char *error, int error_length);
 int  remove_task();
 void set_id_byid(int id, int new_id);
 void set_id(TASK_T *task , int new_id);

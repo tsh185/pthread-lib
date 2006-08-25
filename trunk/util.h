@@ -43,9 +43,9 @@ typedef void (*FUNC_PTR)();
 
 #define CHECK_TEST(num,result){if(!result){printf("Test %d failed\n", num);} }
 
-#define GET_LINE(file,line,line_size,str,val,delim,delim2,sp){ fgets(line,(line_size),file); str=strtok_r(line,delim,&sp); if(!str){continue;} val=strtok_r(NULL, delim2, sp); }
+#define GET_LINE(file,line,line_size,str,val,delim,delim2,sp,val_ptr,str_ptr){ fgets(line,(line_size),file); str=strtok_r(line,delim,sp); if(!str){continue;} val=strtok_r(NULL, delim2, sp); str_ptr=strip_whitespace(str); val_ptr=strip_whitespace(val); }
 /* strcat that concatenates all the chars it can */
-#define STR_CAT(dest,src,max) { int _s = strlen(dest)+strlen(src); if(_s < max){ strcat(dest,src);} else {strncat(dest,src,(max-_s));} }
+#define STR_CAT(dest,src,max) { if((strlen(dest)+strlen(src)) < max){ strcat(dest,src);} else {strncat(dest,src,(max-(strlen(dest)+strlen(src))));} }
 
 
 /* General Error Codes */
@@ -54,5 +54,9 @@ typedef void (*FUNC_PTR)();
 
 /* Public Functions */
 int is_digit(char *str);
+char *strip_leading_blanks(char *str);
+void strip_trailing_blanks(char *str);
+char *strip_whitespace(char *str);
+
 
 #endif

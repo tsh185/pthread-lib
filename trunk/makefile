@@ -28,7 +28,8 @@ TEST_QUEUE_OBJS = \
 
 TEST_TASK_OBJS = \
 	test_task.o \
-	task.o
+	task.o \
+	util.o
 
 EXAMPLE1_OBJS = \
 	example1.o \
@@ -71,6 +72,8 @@ test_queue.o: test_queue.c
 test_task.o: test_task.c task.h
 
 task.o: task.c task.h
+
+util.o: util.c util.h
 
 gen_queue.o: gen_queue.c gen_queue.h
 
