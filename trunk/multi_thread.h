@@ -19,7 +19,7 @@
 */
 
 /*! @file multi_thread.h
-    @brief The header file to multi_thread.c 
+    @brief The header file to multi_thread.c
 */
 
 #ifndef __MULTI_THREAD_H__
@@ -35,10 +35,8 @@
 /* Public Methods */
 pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads);
 void join_threads(int *t_status);
-void check_status(int status, char *api, char *msg);
 int  timed_wait(int wait_secs);
 int  timed_wait_milli(int wait_secs);
-void destroy_all_mutexes();
 
 void stop_threads();
 int  should_stop();
@@ -47,15 +45,7 @@ BOOL set_status_element(int index, int status);
 int *get_status_array();
 void init_status_array();
 void create_status_array();
-int  block_most_signals();
 int  get_pool_size();
 
-
-struct function_ptrs_struct {
-  void *(*term_func_ptr)();
-  void *(*user1_func_ptr)();
-  void *(*user2_func_ptr)();
-};
-typedef struct function_ptrs_struct FUNCTION_PTRS;
 
 #endif
