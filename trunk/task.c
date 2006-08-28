@@ -76,7 +76,7 @@ void init_tasks(int num_tasks){
 /*****************************************************************************/
 /*! @fn void init_task_default()
     @brief Initializes the tasks with the default number of tasks
-    
+
     Calls init_tasks with a default parameter.
 */
 /*****************************************************************************/
@@ -99,7 +99,7 @@ TASK_T *get_init_task(){
 
   memset(task, 0, sizeof(TASK_T));
 
-  return task; 
+  return task;
 }
 
 /*****************************************************************************/
@@ -133,7 +133,7 @@ int add_task(TASK_T *task){
   }
 
   if(size >= capacity){
-    _resize_tasks();  
+    _resize_tasks();
   }
 
   _copy_task(&tasks[next_empty_index], task);
@@ -151,329 +151,149 @@ int add_task(TASK_T *task){
     See the documentation on how to create a task configuration file.
 */
 /*****************************************************************************/
-char *add_tasks_by_file(char *filename, char *error, int error_length){
+int add_tasks_by_file(char *filename){
   const char *METHOD_NM = "add_tasks_by_file: ";
-  char line[FILE_LINE_SIZE + 1];
-  char *str = NULL;
-  char *val = NULL;
-  char *sp = NULL;
-  int num_blank_lines = NUM_BLANK_LINES; 
-  int i,j,k,l;
-  char errors[NUM_ERROR_CHARS+1];
-  char buf[BUFSIZ];
-  int num_tasks = 0;
-  int error_reading_task = FALSE;
-  char *ptr_to_errors = NULL;
-  char *tmp_val = NULL;
-  char *tmp_str = NULL;
+  int rc = 0;
+  scew_tree* tree = NULL;
+  scew_parser* parser = NULL;
+  char buf[512];
 
-  memset(errors, 0 , NUM_ERROR_CHARS+1);
-  memset(buf, 0 , BUFSIZ);
-  memset(line,0, sizeof(line));
+  memset(buf,0,sizeof(buf));
 
-  if(filename == NULL || error == NULL){
-    STR_CAT(errors,"filename passed in is NULL.\n", sizeof(errors));
-    strncpy(error,errors,error_length);
-    return errors;
+  if(filename == NULL){
+      return FALSE;
   }
 
-  FILE *task_file = NULL;
-  task_file = fopen(filename, READ);
-
-  if(task_file == NULL){
-    sprintf(buf,"file [%s] can not be opened.\n",filename);
-    STR_CAT(errors,buf, sizeof(errors));
-    memset(buf,0,sizeof(buf));
-    return errors;
+  parser = scew_parser_create();
+  scew_parser_ignore_whitespaces(parser, 1);
+  rc = scew_parser_load_file(parser, filename)
+  if (!rc){
+    scew_error code = scew_error_code();
+    LOG_ERROR(METHOD_NM,"Unable to load file");
+    return FALSE;
   }
 
-#ifdef DEBUG
-printf("%s file %s was opened successfully\n",METHOD_NM, filename);
-#endif
+  tree = scew_parser_tree(parser);
 
-  while(!feof(task_file)){
+  parse_xml(scew_tree_root(tree), 0);
 
-    GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str);
-
-    printf("%s line is [%s]\n",METHOD_NM,line); 
-    printf("%s str is [%s]\n",METHOD_NM,str);
-    printf("%s val is [%s]\n\n",METHOD_NM,val);
-
-    if(strcasecmp(str,TASK) == 0){
-      num_tasks++;
-      TASK_T task;
-      memset(&task, 0, sizeof(TASK_T));
-#ifdef DEBUG
-      printf("%s found a task defintion - %s\n",METHOD_NM,str);
-#endif
-
-      for(i=0; i<NUM_TASK_DEFINITIONS; i++){
-        /* Interval */
-        if(strcasecmp(str, INTERVAL) == 0){
-          strncpy(task.interval, val, TIME_LEN);  
-#ifdef DEBUG
-          printf("%s found interval %s\n",METHOD_NM,val);
-#endif
-         /* also copies interval to task variable */
-          _validate_interval(task.interval);
-        }
-
-
-        /* thread action: action */
-        else if(strcasecmp(str, THREAD_ACTION) == 0){
-
-#ifdef DEBUG
-  printf("%s found thread_action %s\n",METHOD_NM,str);
-#endif
-          int itr = num_blank_lines;
-          /* Specific fields */
-          for(j=0; j<NUM_THREAD_ACTION_DEFINTIONS; j++){
-
-            GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str);
-
-            if(strcasecmp(str, ACTION) == 0){
-#ifdef DEBUG
-              printf("%s got dead.thread.action %s\n",METHOD_NM,val);
-#endif
-              /* actions: kill_it, replace, kill_program */
-              if(strcasecmp(val, KILL) == 0){
-                task.dead_thread_action = kill_it;
-              }
-              else if(strcasecmp(val, REPLACE) == 0){
-                task.dead_thread_action = replace;
-              }
-              else if(strcasecmp(val, KILL_PROGRAM) == 0){
-                task.dead_thread_action = kill_program; 
-              } else {
-                sprintf(buf,"Expected action value next to action tag. Got [%s] instead.\n", val);
-                STR_CAT(errors,buf,sizeof(errors)); 
-                memset(buf,0,sizeof(buf));
-              }
-            }
-            else {
-              sprintf(buf,"Expected action tag under thread_action tag. Got [%s] instead.\n",val);
-              STR_CAT(errors,buf,sizeof(errors)); 
-              memset(buf,0,sizeof(buf));
-            }
-          }/* end for (j) loop */
-
-          /* No need to validate */
-
-        }/* end if THREAD_ACTION */
-
-
-        /* work load: type, bounds, action, value */
-        else if(strcasecmp(str, WORK_LOAD_CHAR) == 0){
-#ifdef DEBUG
-  printf("%s Got work_load %s\n",METHOD_NM,str);
-#endif
-
-          WORK_LOAD work;
-          for(k=0; k<NUM_WORK_LOAD_DEFINITIONS; k++){
-
-            GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str); 
-
-            /* types: increase, decrease */
-            if(strcasecmp(str, TYPE) == 0){
-#ifdef DEBUG
-              printf("%s found type %s\n",METHOD_NM,val);
-#endif
-              if(strcasecmp(val, INCREASE) == 0){
-                work.type=increase;
-              }
-              else if(strcasecmp(val, DECREASE) == 0){
-                work.type=decrease;
-              } 
-              else {
-                sprintf(buf,"Expected a value next to the type tag. Got [%s] instead\n", val);  
-                STR_CAT(errors,buf,sizeof(errors));
-                memset(buf,0,sizeof(buf));
-              }
-
-            }
-            /* bounds: any integer */
-            else if(strcasecmp(str, UPPER_BOUND) == 0){
-#ifdef DEBUG
-              printf("%s found upper bound %s\n",METHOD_NM,val);
-#endif
-              if(is_digit(str)){
-                work.upper_bound = atoi(val);
-              } else {
-                sprintf(buf,"Expected an integer next to the upper.bound tag. Got [%s] instead\n", val);
-                STR_CAT(errors,buf,sizeof(errors));
-                memset(buf,0,sizeof(buf));
-              }
-            }
-            else if(strcasecmp(str,LOWER_BOUND) == 0){
-#ifdef DEBUG
-              printf("%s found lower bound %s\n",METHOD_NM,val);
-#endif
-              if(is_digit(str)){
-                work.lower_bound = atoi(val);
-              } else {
-                sprintf(buf,"Expected an integer next to the lower.bound tag. Got [%s] instead\n", val);
-                STR_CAT(errors,buf,sizeof(errors));
-                memset(buf,0,sizeof(buf));
-              }
-            }
-            /* work load action: add, sub */ 
-            else if(strcasecmp(str, ACTION) == 0){
-#ifdef DEBUG
-              printf("%s found action %s\n",METHOD_NM,val);
-#endif
-              if(strcasecmp(val, ADD) == 0 ){
-                work.action = add;
-              } 
-              else if(strcasecmp(val, SUB) == 0 ||
-                      strcasecmp(val, SUB_LONG) == 0){
-                work.action = sub;
-              } 
-              else {
-                sprintf(buf,"Expected a value next to the type tag. Got [%s] instead\n",val);
-                STR_CAT(errors,buf,sizeof(errors));
-                memset(buf,0,sizeof(buf));
-              }
-            }
-            /* value: any integer */
-            else if(strcasecmp(str, VALUE) == 0){
-#ifdef DEBUG
-              printf("%s found value %s\n",METHOD_NM,val);
-#endif
-              if(is_digit(val)){
-                work.value = atoi(val); 
-              } 
-              else {
-                sprintf(buf,"Expected an integer next to the value tag. Got [%s] instead,\n",val);
-                STR_CAT(errors,buf,sizeof(errors));
-                memset(buf,0,sizeof(buf));
-              }
-            } else {
-              sprintf(buf,"Expected a tag under work_load tag. Got [%s] instead.\n",str);
-              STR_CAT(errors,buf,sizeof(errors));
-              memset(buf,0,sizeof(buf));
-            }
-          }/* end for work_load loop */
-
-        _validate_work_load(&work);
-
-#ifdef DEBUG
-  printf("%s work_load done validating \n",METHOD_NM);
-#endif
-        if(work.type == increase){
-          _copy_work_to_task(&work, &task, increase);
-        } 
-        else if(work.type == decrease){
-          _copy_work_to_task(&work, &task, decrease);
-        } 
-        else {
-          sprintf(buf,"Can't tell what kind of work (increase/decrease) to add it to the task. type [%d] instead,\n", work.type);
-          STR_CAT(errors,buf,sizeof(errors));
-          memset(buf,0,sizeof(buf));
-        }
-
-        }/* end if work_load tag */
-
-
-        /* schedule: start, repeat */
-        else if(strcasecmp(str, SCHEDULE_CHAR) == 0){
-          SCHEDULE sched;
-#ifdef DEBUG
-        printf("%s Found schedule %s\n",METHOD_NM, str);
-#endif
-          for(l=0; l<NUM_SCHEDULE_DEFINITIONS; l++){
-
-            GET_LINE(task_file, line, FILE_LINE_SIZE, tmp_str, tmp_val, TASK_DELIM, TASK_DELIM2, &sp,val,str);
-
-            if(strcasecmp(str,START) == 0){
-#ifdef DEBUG
-              printf("%s found start date/time %s\n",METHOD_NM,val);
-#endif
-              strncpy(sched.start_char, val, sizeof(char)* DATE_TIME_LEN);     
-            }
-            else if(strcasecmp(str, REPEAT) == 0){
-#ifdef DEBUG
-              printf("%s found repeat %s\n",METHOD_NM,val);
-#endif
-              if(strcasecmp(val, TRUE_CHAR) == 0){
-                sched.repeat = TRUE;
-              }
-              else if(strcasecmp(val, FALSE_CHAR) == 0){
-                sched.repeat = FALSE;
-              }
-              else {
-              sprintf(buf,"Expected a value of true or false next to repeat tag. Got [%s] instead.\n",val);
-              STR_CAT(errors,buf,sizeof(errors));
-              memset(buf,0,sizeof(buf));
-              }
-            } 
-            else {
-              sprintf(buf,"Expected a tag under schedule tag. Got [%s] instead.\n",str);
-              STR_CAT(errors,buf,sizeof(errors));
-              memset(buf,0,sizeof(buf));
-            }
-
-          }/* end for schedule */
-
-          _validate_schedule(&sched);
-          _copy_sched_to_task(&sched, &task);
-
-        }/* end if schedule tag */ 
-        else {
-          sprintf(buf,"tag [%s] is unrecognized under the task tag\n", str);
-          STR_CAT(errors, buf, sizeof(errors-1));
-          memset(buf,0,sizeof(buf));
-        }
-
-      }/* end for loop - task tag */
-
-      /* add the task to the queue of tasks */
-
-#ifdef DEBUG
-      printf("Printing task before it is added\n");
-      print_task(&task);
-#endif
-      if(!error_reading_task){
-        add_task(&task);
-#ifdef DEBUG
-       printf("Added task number %d\n",num_tasks);
-#endif
-      } else {
-#ifdef DEBUG
-        printf("%s Unable to add task b/c there was an error reading the task",METHOD_NM);
-#endif
-        sprintf(buf,"Not able to add task number %d. See errors for more information\n",num_tasks);
-        STR_CAT(errors,buf,sizeof(errors));
-        memset(buf,0,sizeof(buf));
-      }
-
-    }/* end if task tag */
-  }/* end while not end of file */
-
-#ifdef DEBUG
-  printf("%s Done parsing the file %s\n",METHOD_NM,filename);
-#endif
-
-  /* Copy errors to string given */
-  if(errors[0] != '\0'){
-#ifdef DEBUG
-    printf("%s found errors, going to copy to variable\n", METHOD_NM);
-#endif
-     sprintf(buf, "Errors while parsing file %s\n", filename);
-     STR_CAT(errors, buf, sizeof(errors));
-     memset(buf,0,sizeof(buf));
-     strncpy(error, errors, sizeof(int)*error_length-1);
-     ptr_to_errors = error;
-  }
-
-  /* close the file */
-  if(task_file){
-    fclose(task_file);
-  }
-
-  return ptr_to_errors;
+  scew_tree_free(tree);
+  scew_parser_free(parser);
 
 }
 
+/*****************************************************************************/
+/*****************************************************************************/
+void parse_xml(scew_element* element, unsigned int indent){
+  const char *METHOD_NM = "parse_xml(): ";
+
+  if (element == NULL){
+      return;
+  }
+
+  scew_element* child = NULL;
+
+  XML_Char *name = scew_element_name(element);
+  XML_Char *value = NULL;
+  XML_Char *att_name = NULL;
+  XML_Char *att_value = NULL;
+
+
+  if(!strcasecmp(element,TOP_LEVEL_NAME) == 0){
+    LOG_ERROR("%s This is not a properly formatted configuration file.\n",METHOD_NM);
+    LOG_ERROR("%s Exptected [%s], got [%s]\n",METHOD_NM, TOP_LEVEL_NAME, name);
+    return;
+  }
+
+
+  TASK_T task;
+  int task_id = 0;
+  memset(&task,0,sizeof(task));
+  hasTask = FALSE;
+
+  while ((child = scew_element_next(element, child)) != NULL){
+
+    name = scew_element_name(child);
+    value = scew_element_contents(child);
+
+      if(strcasecmp(name,TASK) == 0){
+
+        /* add task before we create a new task */
+        if(hasTask){
+          add_task(&task);
+          memset(&task,0,sizeof(task));
+        }
+
+        hasTask = TRUE;
+        task_id++;
+
+      } else if(strcasecmp(name, INTERVAL) == 0){
+          strncpy(task.interval, value, TIME_LEN);
+          task._interval =
+            _validate_interval(task.interval);
+
+      } else if(strcasecmp(name, THREAD_ACTION) == 0){
+        while ((attribute = scew_attribute_next(element, attribute)) != NULL){
+          att_name = scew_attribute_name(attribute);
+          att_value = scew_attribute_value(attribute);
+
+          if(att_name != NULL){
+            if(strcasecmp(att_name, ACTION) == 0){
+              if(strcasecmp(value, KILL){
+                task.dead_thread_action = kill_it;
+              } else if(strcasecmp(value, REPLACE) == 0){
+                task.dead_thread_action = replace;
+              } else if(strcasecmp(value, KILL_PROGRAM) == 0){
+                task.dead_thread_action = kill_program;
+              } else {
+                LOG_ERROR("%s unexpected attribute [%s] under tag [%s].\n",METHOD_NM,value,att_name);
+              }
+            }/* end if attribute == ACTION */
+        }/* end if att_name != NULL */
+
+      } /*else if(strcasecmp(str, ACTION) == 0){
+
+      } else if(strcasecmp(val, KILL) == 0){
+
+      } else if(strcasecmp(val, REPLACE) == 0){
+
+      } else if(strcasecmp(val, KILL_PROGRAM) == 0){
+
+      } else if(strcasecmp(str, WORK_LOAD_CHAR) == 0){
+
+      } else if(strcasecmp(str, TYPE) == 0){
+
+      } else if(strcasecmp(val, INCREASE) == 0){
+
+      } else if(strcasecmp(val, DECREASE) == 0){
+
+      } else if(strcasecmp(str, UPPER_BOUND) == 0){
+
+      } else if(strcasecmp(str,LOWER_BOUND) == 0){
+
+      } else if(strcasecmp(str, ACTION) == 0){
+
+      } else if(strcasecmp(val, ADD) == 0){
+
+      } else if(strcasecmp(val, SUB) == 0){
+
+      } else if(strcasecmp(str, VALUE) == 0){
+
+      } else if(strcasecmp(str, SCHEDULE_CHAR) == 0){
+
+      } else if(strcasecmp(str,START) == 0){
+
+      } else if(strcasecmp(str, REPEAT) == 0){
+
+      } */
+        else {
+        LOG_ERROR("%s Unrecognized element [%s]\n",METHOD_NM, name);
+      }
+
+  } /* end while */
+
+
+}
 /*****************************************************************************/
 /*! @fn int remove_task()
     @brief Removes the last task from \a tasks
@@ -923,7 +743,7 @@ void _resize_tasks(){
 
   /* copy tasks in original */
   for(i=0; i<capacity; i++){
-    _copy_task(&t[i],&tasks[i]); 
+    _copy_task(&t[i],&tasks[i]);
   }
 
   FREE(tasks);
@@ -946,7 +766,7 @@ long _get_time_from_string(char *string){
   int min = 0;
   int sec = 0;
   char *sp = NULL;
-  char *str = NULL; 
+  char *str = NULL;
   const char *delim = ":";
 
 
@@ -987,7 +807,7 @@ int _get_task_by_id(int id){
 
 /*****************************************************************************/
 /*! @fn void _copy_work_to_task(WORK_LOAD *work, TASK_T *task, work_load_type type )
-    @breif Copies a work struct to the task struct 
+    @breif Copies a work struct to the task struct
     @param WORK_LOAD *work Work load to be copied
     @param TASK_T *task Task for the work load to be cpied
     @param work_load_type type Increase or decrease
@@ -1003,10 +823,10 @@ void _copy_work_to_task(WORK_LOAD *work, TASK_T *task, work_load_type type ){
 
   if(type == increase){
     memcpy(&(task->load_increase), work, sizeof(WORK_LOAD));
-  } 
+  }
   else if(type == decrease){
     memcpy(&(task->load_decrease), work, sizeof(WORK_LOAD));
-  } 
+  }
 
   return;
 }
@@ -1077,7 +897,7 @@ int _validate_schedule(SCHEDULE *sched){
 
   /* get the date */
   year = strtok_r(date, delim2, &sp);
-  if(is_digit(year)) { sched->start.tm_year = atoi(year); } else { rc = FALSE; } 
+  if(is_digit(year)) { sched->start.tm_year = atoi(year); } else { rc = FALSE; }
 
   month = strtok_r(NULL, delim2, &sp);
   if(is_digit(month)) { sched->start.tm_mon = atoi(month); } else { rc = FALSE; }
