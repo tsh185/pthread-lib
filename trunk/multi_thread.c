@@ -75,9 +75,9 @@ void  _handle_ping_signal();
     @param void *parameter generic parameter, each thread will have it's own local copy.
     @param int num_threads the number of threads to create
 
-    Creates the threads and passes them the function to be executed and the   
-    generic parameter as a void ptr. The array of threads are stored in the  
-    thread_pool variable.                                                   
+    Creates the threads and passes them the function to be executed and the
+    generic parameter as a void ptr. The array of threads are stored in the
+    thread_pool variable.
 */
 /*****************************************************************************/
 pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads){
@@ -96,7 +96,7 @@ pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads)
   }
 
   /* Initalize local mutex variables */
-  _create_local_mutexes(); 
+  _create_local_mutexes();
 
   /* Set the thread_stop flag to false */
   thread_stop = 0;
@@ -179,28 +179,6 @@ void join_threads(int *t_status){
   _destroy_all_mutexes();
 
 } /* end join_threads */
-
-/******************************************************************************/
-/* Checks that status of the function and takes action if the status is       */
-/* a non-zero number.                                                         */
-/*                                                                            */
-/* Parameters: int status - status to be checked                              */
-/*             char *api  - name of the function                              */
-/*             hcar *msg  - message to be printed (for debug purposes)        */
-/******************************************************************************/
-/*
-void _check_status(int status, char *api, char *msg) {
-  if( status != 0 ) {
-    int _errno = errno;
-    if( api )
-      printf( "%s ", api );
-    printf( "failure" );
-    if( msg )
-      printf( ": %s", msg );
-    printf( " (status = %d, errno = %d)\n", status, _errno );
-    exit( 1 );
-  }
-} *//* check_status */
 
 /*****************************************************************************/
 /* Does a timed wait on the number of seconds passed in as a parameter.      */
@@ -311,74 +289,6 @@ int timed_wait_milli(int wait_secs){
 
 }/* end timed_wait */
 
-/*****************************************************************************/
-/* Blocks all unix signals to the thread that calls it.                      */
-/* Be sure and create a signal handler before this is called.                */
-/*****************************************************************************/
-int block_all_signals(){
-
-  sigset_t signals;
-  sigfillset(&signals);
-  /* sigdelset(sigset_t *set, int signo); for removing a signal to poll the threads */
-  int rc;
-
-  rc = pthread_sigmask(SIG_BLOCK, &signals, NULL);
-  return rc;
-}
-
-/*****************************************************************************/
-/*!
-    @breif Blocks all signals except SIGCHLD
-
-*/
-/*****************************************************************************/
-int block_most_signals(){
-  struct sigaction sig_action;
-  int rc;
-
-  /* Block all the signals */
-  rc = block_all_signals();
-
-  sigemptyset(&sig_action.sa_mask);
-  /* Add SIGCHLD to the list */
-  sigaddset(&sig_action.sa_mask, SIGCHLD);
-
-  /* Add a action to the SIGCHLD signal */
-  sig_action.sa_handler = _handle_ping_signal;
-  sig_action.sa_flags = 0;
-
-  /* Unblock the signals in sig_action.sa_mask */
-  rc = pthread_sigmask(SIG_UNBLOCK, &sig_action.sa_mask, NULL);
-
-  /* assign action to the ping signal */
-  sigaction(SIGCHLD, &sig_action, NULL);
-
-  return rc;
-}
-
-/*****************************************************************************/
-/*! @fn void *_handle_ping_signal()
-    @brief Handles the ping signal by setting a int to 1 or TRUE
-
-    This function will handle the ping signal by setting it's corresponding
-    integer in the \a status_array to be true.  If this value is not 
-    populated, it means the thread is dead.
-
-*/
-/*****************************************************************************/
-void _handle_ping_signal(){
-  pthread_t self = pthread_self();
-
-  int index = _find_my_index(self);
-
-  set_status_element(index, 1);
-
-#ifdef DEBUG
-  printf("Thread %d populated the array with %d\n",index,1);
-#endif
-
-}
-
 
 /*****************************************************************************/
 /*! @fn int find_my_index(pthread_t thread)
@@ -398,7 +308,7 @@ int _find_my_index(pthread_t thread){
   _lock_thread_pool();
   for(i=0; i<size; i++){
     if(pthread_equal(thread, thread_pool[i])){
-      break;  
+      break;
     }
   }
   _unlock_thread_pool();
@@ -411,82 +321,6 @@ int _find_my_index(pthread_t thread){
 
   return i;
 }
-
-/*****************************************************************************/
-/* Creates a single thread signal handler to handle all interrupt signals    */
-/* for all threads.                                                          */
-/* Parameters                                                                */
-/* function_ptrs - FUNCTION_PTRS with the term_func_ptr populated,at the     */
-/*                 very least.                                               */
-/*****************************************************************************/
-int signal_handler_create(void *function_ptrs){
-  int rc =0;
-  pthread_t thread_id;
-
-  rc = pthread_create(&thread_id, NULL, _signal_handler_function, (void *)function_ptrs);
-  return rc;
-}
-
-/*****************************************************************************/
-/* This is the function the signal handler executes.                         */
-/* It runs until the term signal (SIGTERM) is sent, then it executes the     */
-/* defined exit function and exits itself.                                   */
-/*                                                                           */
-/* Parameters                                                                */
-/* functions - FUNCTION_PTRS function with the term_func_ptr member          */
-/*             populated with a function.                                    */
-/*****************************************************************************/
-void *_signal_handler_function(void *functions){
-  const char *METHOD_NM = "signal_handler_function: ";
-  FUNCTION_PTRS *function_ptrs = (FUNCTION_PTRS *)functions;
-  sigset_t signals;
-  int rc = 0;
-  int sig_caught;
-  int still_running = 1;
-
-  /* Check incomming parameter */
-  if(functions == NULL){
-    LOG_ERROR(METHOD_NM, "Error, void *functions parameter is NULL");
-    stop_threads();
-    exit(ERROR_CODE_SIG_HANDLER_NO_FUNCTIONS);
-  }
-
-  sigfillset(&signals);
-  while(still_running){
-
-    rc = sigwait(&signals, &sig_caught);
-
-    printf("%s Caught signal [%d]\n",METHOD_NM,sig_caught);
-
-    switch(sig_caught){
-      case SIGTERM:
-        still_running = 0;
-        if(function_ptrs->term_func_ptr != NULL){
-          function_ptrs->term_func_ptr();
-        }
-        break;
-      case SIGUSR1:
-        if(function_ptrs->user1_func_ptr != NULL){
-          function_ptrs->user1_func_ptr();
-        }
-        break;
-      case SIGUSR2:
-        if(function_ptrs->user2_func_ptr != NULL){
-          function_ptrs->user2_func_ptr();
-        }
-        break;
-      case SIGHUP:
-        //re-read configuration file
-        break;
-      default:
-	printf("%s Caught Unsupported Signal [%d], Igoring.\n", METHOD_NM, sig_caught);
-	break;
-    } /* end switch */
-  } /* end while(still_running) */
-
-  pthread_exit(NULL);
-}/* end signal_handler_function */
-
 
 /* Mutex Operations */
 /*************************************/
@@ -638,7 +472,7 @@ int get_pool_size(){
     be updated, this means the thread is dead. If the malloc fails
     this thread will exit.
 
-    This function has a mutex and, therefore, is thread safe. 
+    This function has a mutex and, therefore, is thread safe.
 */
 /******************************************************************************/
 void create_status_array(){
@@ -659,7 +493,7 @@ void create_status_array(){
   _unlock_status_array();
 
   /* exit if error */
-  if(rc){ exit(rc);} 
+  if(rc){ exit(rc);}
 }
 
 /******************************************************************************/
