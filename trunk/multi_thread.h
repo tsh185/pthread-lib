@@ -31,6 +31,18 @@
 /* Error Codes */
 #define ERROR_CODE_SIG_HANDLER_NO_FUNCTIONS 2
 
+#define DEFAULT_NUM_POOLS 5
+
+/* Structs */
+struct thread_pool_struct {
+    int id;
+    int capacity;
+    int size;
+    pthread_t *pool;
+    int use_global_stop;
+    int stop;
+}
+typedef struct thread_pool_struct THREAD_POOL;
 
 /* Public Methods */
 pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads);

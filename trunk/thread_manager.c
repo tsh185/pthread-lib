@@ -28,12 +28,15 @@
 #include "util.h"
 #include "thread_manager.h"
 
-
+/* Globals */
+pthread_t *global_manager_thread = NULL;
 pthread_t *pool_to_manage = NULL;
-int total_threads;
+
+int total_threads = 0;
 int ping_signal = 18; /* SIGCHLD */
 
-struct timespec wait_time;
+int thread_manager_running = FALSE;
+pthread_mutex_t thread_manager_running_mutex;
 
 /* Private Functions */
 void *begin_managing();
@@ -44,18 +47,46 @@ int read_internal_config();
 /******************************************************************************/
 void create_thread_manager(pthread_t *thread_pool, int num_threads){
     const char *METHOD_NM = "create_thread_manager: ";
-    int thread_id;
+    int status = 0;
 
     if(thread_pool == NULL){
         printf("%s pool to manage is NULL!", METHOD_NM);
         return;
     }
 
-    read_internal_config();
+    pthread_t *thread = (pthread_t *)malloc(sizeof(pthread_t));
 
+    /* assign pool to manage */
     pool_to_manage = thread_pool;
-    rc = pthread_create(&thread_id, NULL, begin_managing, (void *)arg);
 
+    /* create our manager thread */
+    rc = pthread_create(thread, NULL, begin_managing, (void *)arg);
+
+    /* save our thread handle */
+    global_manager_thread = thread;
+
+    /* set our running flag */
+    thread_manager_running = TRUE;
+
+    /* create mutexes */
+    status = pthread_mutex_init(&thread_pool_mutex, NULL);
+    CHECK_STATUS(status, "pthread_mutex_init", "thread_pool_mutex bad status");
+}
+
+/******************************************************************************/
+/******************************************************************************/
+void destroy_thread_manager(){
+  void *ret_value = 0;
+
+  thread_manager_running = FALSE;
+
+  /* wait until the thread stops */
+  int status = pthread_join(global_manager_thread, &ret_value);
+  CHECK_STATUS(status, "pthread_join", "bad status");
+
+  cleanup_tasks();
+
+  FREE(global_manager_thread);
 
 }
 
@@ -63,9 +94,17 @@ void create_thread_manager(pthread_t *thread_pool, int num_threads){
 /* The default function the thread_manager executes.                          */
 /******************************************************************************/
 void *begin_managing(){
+/*
 
+
+*/
 }
 
+/******************************************************************************/
+/******************************************************************************/
+void cleanup_tasks(){
+
+}
 
 /******************************************************************************/
 /******************************************************************************/
@@ -83,7 +122,7 @@ print_thread_status(pthread_t *thread_pool, int num_threads){
     rc = pthread_getschedparam(thread_pool[i], &policy, &sched);
     printf("Policy [%d]\n", policy);
 
-    rc = pthread_getunique_np(thread_pool[i], &pthread_id); 
+    rc = pthread_getunique_np(thread_pool[i], &pthread_id);
 
     rc = pthread_is_multithreaded_np(thread_pool[i], (void *)(&status));
 
@@ -137,7 +176,7 @@ int read_internal_config(){
 
   while(!feof(config_file)){
     fgets(line,(FILE_LINE_SIZE-1),config_file);
-    
+
     str=strtok_r(line,"=\0",&sp);
     val=strtok_r(NULL,"# \t\r\n\0", &sp);
 

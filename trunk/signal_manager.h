@@ -25,18 +25,30 @@
 #ifndef __SIGNAL_MANAGER_H__
 #define __SIGNAL_MANAGER_H__
 
+/* Defines */
+#define SIGNAL_HANDLER_DESTROY_SIGNAL SIGQUIT
+
 /* Structs */
 struct function_ptrs_struct {
-  void *(*term_func_ptr)();
-  void *(*user1_func_ptr)();
-  void *(*user2_func_ptr)();
+  void *(*hup_func_ptr)();  /* 1    Exit    Hangup                           */
+  void *(*int_func_ptr)();  /* 2    Exit    Interrupt                        */
+  void *(*alarm_func_ptr)();/* 14   Exit    Alarm Clock                      */
+  void *(*term_func_ptr)(); /* 15   Exit    Terminated                       */
+  void *(*user1_func_ptr)();/* 16   Ignore  User Signal 1                    */
+  void *(*user2_func_ptr)();/* 17   Ignore  User Signal 2                    */
+  void *(*child_func_ptr)();/* 18   Ignore  Child status                     */
+  void *(*cont_func_ptr)(); /* 25   Ignore  Continued                        */
+  void *(*wait_func_ptr)(); /* 32   Ignore  All LWPs Blocked                 */
+  void *(*lwp_func_ptr)();  /* 33   Ignore  Virtual Interprocessor Interrupt */
+                            /*              for threads library              */
+  void *(*aio_func_ptr)();  /* 34   Ignore  Asynchronous I/O                 */
 };
 typedef struct function_ptrs_struct FUNCTION_PTRS;
 
 
 /* Function Prototypes */
-int signal_handler_create(void *function_ptrs);
-int block_all_signals();
+int  signal_handler_create(void *function_ptrs);
+int  block_all_signals();
 int  block_most_signals();
 
 #endif

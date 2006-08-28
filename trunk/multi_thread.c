@@ -32,8 +32,9 @@
 #include "util.h"
 
 /* Global Variables */
-pthread_t *thread_pool = NULL;
-int pool_size = 1;
+THREAD_POOL *thread_pools = NULL;
+int pools_size = 0;
+int pools_capacity = 0;
 
 /* Mutexes */
 pthread_mutex_t thread_pool_mutex;
@@ -80,37 +81,69 @@ void  _handle_ping_signal();
     thread_pool variable.
 */
 /*****************************************************************************/
-pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads){
+THREAD_POOL *create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads){
   int status;
   int thread_num;
   const char *METHOD_NM = "create_threads: ";
+  pthread_t *threads = NULL;
+  THREAD_POOL pool;
 
-  pool_size = num_threads;
+  /* if first time, allocat memory */
+  if(thread_pools == NULL){
+    thread_pools = (THREAD_POOL *)malloc(sizeof(THREAD_POOL)*DEFAULT_NUM_POOLS);
+    CHECK_MALLOC(thread_pools, METHOD_NM, "failed on malloc of thread_pools");
+    memset(thread_pools,0,sizeof(THREAD_POOL)*DEFAULT_NUM_POOLS);
+
+    pools_capacity = DEFAULT_NUM_POOLS;
+  }
 
   /* Create memory */
-  thread_pool = (pthread_t *)malloc(pool_size * sizeof(*thread_pool));
-
-  if(thread_pool == NULL){
-    LOG_ERROR(METHOD_NM,"Could not create threads!");
-    exit(ERROR_CODE_MALLOC);
-  }
+  threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
+  CHECK_MALLOC(threads,METHOD_NM,"Failed on malloc of pool");
 
   /* Initalize local mutex variables */
   _create_local_mutexes();
 
   /* Set the thread_stop flag to false */
-  thread_stop = 0;
+
+  thread_stop = FALSE;
 
   /* Initalize all threads and pass the parameter */
   int i;
-  for(i = 0; i < pool_size; i++){
+  for(i = 0; i < num_threads; i++){
     status = pthread_create(&thread_pool[i], NULL, func_ptr, parameter);
     CHECK_STATUS(status, "pthread_create", "thread bad status");
   }
 
+  /* setup THREAD_POOL object */
+  memset(&pool,0,sizeof(pool));
+  pool.id = pools_size;
+  pool.capacity = num_threads;
+  pool.size = num_threads;
+  pool.pool = threads;
+  pool.use_global_stop = FALSE;
+  pool.stop = FALSE;
+
+  add_thread_pool(&pool);
+
   return thread_pool;
 } /* end create_threads */
 
+/******************************************************************************/
+/******************************************************************************/
+void add_thread_pool(THREAD_POOL *pool){
+  if(pool == NULL){
+      return;
+  }
+
+  if(pools_size >= pools_capacity){
+    return; /* resize it later */
+  }
+
+  int index = pools_size;
+  pools_size++;
+  COPY(thread_pools[index],pool);
+}
 
 /******************************************************************************/
 /******************************************************************************/

@@ -48,6 +48,7 @@ typedef void (*FUNC_PTR)();
 /* strcat that concatenates all the chars it can */
 #define STR_CAT(dest,src,max) { if((strlen(dest)+strlen(src)) < max){ strcat(dest,src);} else {strncat(dest,src,(max-(strlen(dest)+strlen(src))));} }
 
+#define COPY(dest,src,size){ memset(dest,0,size); memcpy(dest,src,size); }
 
 /* General Error Codes */
 #define ERROR_CODE_MALLOC 1

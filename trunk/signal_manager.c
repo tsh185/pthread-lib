@@ -30,6 +30,8 @@
 
 /* Global Variables */
 pthread_t *global_signal_manager = NULL;
+int signal_manager_running = FALSE;
+pthread_mutex_t signa_manager_running_mutex;
 
 /* Private Functions */
 void  _handle_ping_signal();
@@ -37,15 +39,18 @@ void *_signal_handler_function(void *functions);
 
 
 /*****************************************************************************/
-/* Creates a single thread signal handler to handle all interrupt signals    */
-/* for all threads.                                                          */
-/* Parameters                                                                */
-/* function_ptrs - FUNCTION_PTRS with the term_func_ptr populated,at the     */
-/*                 very least.                                               */
+/*! @fn int signal_handler_create(void *function_ptrs)
+    @brief Creates a single thread to handle all interrupt signals.
+    @param FUNCTION_PTRS *function_ptrs Set of functions to be executed
+
+    The function pointer that correlated with each signal will be executed
+    when that signal is encountered.  If a ptr is null, nothing happens.
+
+*/
 /*****************************************************************************/
-int signal_handler_create(void *function_ptrs){
+int signal_handler_create(FUNCTION_PTRS *function_ptrs){
   int rc =0;
-  pthread_t thread;
+  pthread_t *thread = (pthread_t *)malloc(sizeof(pthread_t));
 
   rc = pthread_create(&thread, NULL, _signal_handler_function, (void *)function_ptrs);
 
@@ -55,13 +60,54 @@ int signal_handler_create(void *function_ptrs){
 }
 
 /*****************************************************************************/
-/* This is the function the signal handler executes.                         */
-/* It runs until the term signal (SIGTERM) is sent, then it executes the     */
-/* defined exit function and exits itself.                                   */
-/*                                                                           */
-/* Parameters                                                                */
-/* functions - FUNCTION_PTRS function with the term_func_ptr member          */
-/*             populated with a function.                                    */
+/*! @fn void stop_signal_manager()
+    @brief Stops the thread manager by setting a flag and sending a signal
+
+    This function must send a signal to the manager to break it out of
+    sigwait. The signal is not assignable in the set of function pointers to
+    avoid undesired behavior.
+
+    NOTE: A better way to design it would be to make the signal handler stop
+          when the program stops and use destroy_signal_handler only.
+*/
+/*****************************************************************************/
+void stop_signal_manager(){
+
+  /* set flag to stop */
+  signal_manager_running = FALSE;
+
+  /* send signal to thread to break it out of wait */
+  pthread_kill(global_signal_manager, SIGNAL_HANDLER_DESTROY_SIGNAL);
+
+  destroy_signal_manager();
+
+}
+
+/*****************************************************************************/
+/*! @fn void destroy_signal_manager()
+    @brief Synchronizes the signal handler and frees the memory
+
+    This function must be called to release the thread's memory.
+    Do not use this function after calling stop_signal_handler.
+*/
+/*****************************************************************************/
+void destroy_signal_manager(){
+  int status = 0;
+  void *ret_value = 0;
+
+  /* wait for the thread to stop */
+  int status = pthread_join(global_signal_manager, &ret_value);
+  CHECK_STATUS(status, "pthread_join", "bad status");
+
+  FREE(global_signal_manager);
+}
+
+/*****************************************************************************/
+/*! @fn void *_signal_handler_function(void *functions)
+    @brief The function the signal handler executes
+    @param void *functions Set of functions to execute when a signal is sent
+
+*/
 /*****************************************************************************/
 void *_signal_handler_function(void *functions){
   const char *METHOD_NM = "signal_handler_function: ";
@@ -69,7 +115,6 @@ void *_signal_handler_function(void *functions){
   sigset_t signals;
   int rc = 0;
   int sig_caught;
-  int still_running = 1;
 
   /* Check incomming parameter */
   if(functions == NULL){
@@ -87,7 +132,7 @@ void *_signal_handler_function(void *functions){
 
     switch(sig_caught){
       case SIGTERM:
-        still_running = 0;
+        signal_manager_running = FALSE;
         if(function_ptrs->term_func_ptr != NULL){
           function_ptrs->term_func_ptr();
         }
@@ -115,29 +160,33 @@ void *_signal_handler_function(void *functions){
 }/* end signal_handler_function */
 
 /*****************************************************************************/
-/* Blocks all unix signals to the thread that calls it.                      */
-/* Be sure and create a signal handler before this is called.                */
+/*! @fn int block_all_signals()
+    @brief Blocks all signal for the thread calling this function
+
+    This function must be called per thread for all threads to block all
+    signals.
+*/
 /*****************************************************************************/
 int block_all_signals(){
 
   sigset_t signals;
   sigfillset(&signals);
-  /* sigdelset(sigset_t *set, int signo); for removing a signal to poll the threads */
-  int rc;
 
-  rc = pthread_sigmask(SIG_BLOCK, &signals, NULL);
+  int rc = pthread_sigmask(SIG_BLOCK, &signals, NULL);
   return rc;
 }
 
 /*****************************************************************************/
-/*!
-    @breif Blocks all signals except SIGCHLD
+/*! @fn int block_most_signals()
+    @brief Blocks all signals except SIGCHLD
 
+    Assigns the function \a _handle_pint_signal() for when the SIGCHLD
+    signal is sent.
 */
 /*****************************************************************************/
 int block_most_signals(){
   struct sigaction sig_action;
-  int rc;
+  int rc = 0;
 
   /* Block all the signals */
   rc = block_all_signals();
