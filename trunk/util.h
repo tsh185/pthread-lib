@@ -22,7 +22,7 @@
 #define __UTIL_H__
 
 #define FALSE 0
-#define TRUE !FALSE 
+#define TRUE !FALSE
 
 typedef int BOOL;
 typedef void (*FUNC_PTR)();
@@ -37,7 +37,8 @@ typedef void (*FUNC_PTR)();
 /* Macro to check status of thread operations */
 #define CHECK_STATUS(status, api, msg){if( status != 0 ) {int _errno = errno;if( api )printf( "%s ", api );printf( "failure" );if( msg )printf( ": %s", msg );printf( " (status = %d, errno = %d)\n", status, _errno );exit( 1 ); }}
 /* Macro to log an error */
-#define LOG_ERROR(method, msg) {printf("ERROR - %s %s\n",method,msg);  }
+#define LOG_ERROR_SIMPLE(method, msg) {printf("ERROR - %s %s\n",method,msg);  }
+#define LOG_ERROR(format, ...) { fprintf (stderr, format, __VA_ARGS__); }
 /* Macro for easy malloc check */
 #define CHECK_MALLOC(var,method,msg){if(!var){LOG_ERROR(method,msg); exit(ERROR_CODE_MALLOC);}}
 
