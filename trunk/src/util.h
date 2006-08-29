@@ -50,6 +50,11 @@ typedef void (*FUNC_PTR)();
 
 #define COPY(dest,src,size){ memset(dest,0,size); memcpy(dest,src,size); }
 
+#define INT_TO_CHAR(num,c){ sprintf(c,"%i", num);  }
+
+#define LOCK(m) { CHECK_STATUS(pthread_mutex_lock(m) , "pthread_mutex_lock", "bad status");  }
+#define UNLOCK(m) { CHECK_STATUS(pthread_mutex_unlock(m), "pthread_mutex_unlock", "bad status"); }
+
 /* General Error Codes */
 #define ERROR_CODE_MALLOC 1
 
@@ -59,6 +64,6 @@ int is_digit(char *str);
 char *strip_leading_blanks(char *str);
 void strip_trailing_blanks(char *str);
 char *strip_whitespace(char *str);
-
+void int_to_char(int i, char *c, size_t size);
 
 #endif

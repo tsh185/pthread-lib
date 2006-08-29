@@ -43,6 +43,12 @@ struct thread_pool_mutex_struct {
 };
 typedef struct thread_pool_mutex_struct THREAD_POOL_MUTEX;
 
+struct parameter_struct {
+  int id;
+  void *user_parameter;
+};
+typedef struct parameter_struct PARAMETER;
+
 struct thread_pool_struct {
     int id;
     char char_id[CHAR_ID_LEN];
@@ -53,8 +59,10 @@ struct thread_pool_struct {
     int stop;
     int *status_array;
     struct thread_pool_mutex_struct mutexes;
+    struct parameter_struct parameter;
 };
 typedef struct thread_pool_struct THREAD_POOL;
+
 
 /* Public Methods */
 pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads);

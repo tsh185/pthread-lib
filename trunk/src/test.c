@@ -27,12 +27,42 @@
 #include "multi_thread.h"
 
 
-void *print_me(){
-	printf("PRINT ME!\n");
+void *print_me(void *e){
+  PARAMETER *p = (PARAMETER *)e;
+  int id = p->id;
+  int amt = 0;
+
+  while(!should_stop_pool(id)){
+    timed_wait(1);
+  }
+
+  printf("done with print_me\n");
 }
 
+void *print_me_pool(void *e){
+  PARAMETER *p = (PARAMETER *)e;
+  int id = p->id;
+
+  while(!should_stop_pool(id)){
+    timed_wait(1);
+  }
+
+  printf("done with print_me_pool\n");
+}
+
+
 int main(){
-	int id = create_thread_pool((void *)print_me, NULL, 4);
+	int id = create_thread_pool((void *)print_me,NULL, 4);
+	int id2 = create_thread_pool((void *)print_me_pool, NULL, 2);
+
+	timed_wait(1);
+	stop_pool(id2);
+	join_threads(id2);
+
+	timed_wait(2);
+	stop_pool(id);
 	join_threads(id);
+
         printf("DONE\n");	
 }
+

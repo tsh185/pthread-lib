@@ -87,3 +87,8 @@ char *strip_whitespace(char *str) {
   strip_trailing_blanks(str);
   return strip_leading_blanks(str);
 }
+
+void int_to_char(int i, char *c, size_t size){
+  snprintf(c,(size-1),"%i", i);
+}
+

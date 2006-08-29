@@ -78,13 +78,19 @@ void _thread_pool_print(gdsl_element_t e);
 int create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads){
   int status;
   int thread_num;
+  int id = 0;
   const char *METHOD_NM = "create_thread_pool: ";
   pthread_t *threads = NULL;
+  THREAD_POOL pool;
 
   if(func_ptr == NULL || num_threads <= 0){
     return -1;
   }
 
+  /* init structures */
+  memset(&pool,0,sizeof(pool));
+
+  id = thread_pool_id++;
   /* if first time, create hash table*/
   if(thread_pool_hash == NULL){
     thread_pool_hash = gdsl_hash_alloc(THREAD_POOL_HASH_TABLE_NAME, _thread_pool_alloc,
@@ -101,19 +107,22 @@ int create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads){
   threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
   CHECK_MALLOC(threads,METHOD_NM,"Failed on malloc of pool");
 
+  /* Create memory for the parameter */
+  pool.parameter.id = id;
+  pool.parameter.user_parameter = parameter;
+
   /* Initalize all threads and pass the parameter */
+  /* Note: the user supplied parameter is wrapped in the private parameter */
   int i;
   for(i = 0; i < num_threads; i++){
-    status = pthread_create(&threads[i], NULL, func_ptr, parameter);
+    status = pthread_create(&threads[i], NULL, func_ptr, (void *)&(pool.parameter));
     CHECK_STATUS(status, "pthread_create", "thread bad status");
   }
 
   /* setup THREAD_POOL object */
-  THREAD_POOL pool;
-  memset(&pool,0,sizeof(pool));
-  pool.id = thread_pool_id++;
+  pool.id = id;
   /* convert int id to char id */
-  sprintf(pool.char_id, "%i", pool.id);
+  INT_TO_CHAR(pool.id,pool.char_id);
   pool.capacity = num_threads;
   pool.size = num_threads;
   pool.pool = threads;
@@ -141,7 +150,7 @@ int create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads){
 /*                    defined.  This should contain their status, 1 if ok,    */
 /*                    0 if dead or lost.                                      */
 /******************************************************************************/
-void join_threads(int pool_id){
+void join_threads(int pool_id){ /* may need to put a function to free the parameter ptr */
   int status;
   void *ret_value = 0;
   const char *METHOD_NM = "join_threads: ";
@@ -368,28 +377,6 @@ int should_stop_all() {
 }
 
 /******************************************************************************/
-/******************************************************************************/
-void stop_pool(int id){
-  char key[CHAR_ID_LEN];
-  memset(key,0,sizeof(key));
-
-  /* convert to char */
-  sprintf(key, "%i", id);
-  gdsl_element_t e = gdsl_hash_search(thread_pool_hash, key);
-
-  if(e == NULL){
-    LOG_ERROR("Unable to stop pool with id [%s]\n",key);
-    return;
-  }
-
-  THREAD_POOL *p = (THREAD_POOL *)e;
-  /* lock */
-  p->stop = TRUE;
-  /* unlock */
-
-}
-
-/******************************************************************************/
 /*! @fun void set_stop(int stop)
 */
 /******************************************************************************/
@@ -410,11 +397,32 @@ int should_stop_pool(int id){
 
   THREAD_POOL *p = (THREAD_POOL *)e;
 
-  /* lock */
+  LOCK(&(p->mutexes.stop_mutex));
   stop = p->stop;
-  /* unlock */
+  UNLOCK(&(p->mutexes.stop_mutex));
 
   return stop;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+void stop_pool(int id){
+  char key[CHAR_ID_LEN];
+  memset(key,0,sizeof(key));
+
+  INT_TO_CHAR(id,key);
+  gdsl_element_t e = gdsl_hash_search(thread_pool_hash, key);
+
+  if(e == NULL){
+    LOG_ERROR("Unable to find pool to stop the threads for id [%d]\n",key);
+    return;
+  }
+
+  THREAD_POOL *p = (THREAD_POOL *)e;
+
+  LOCK(&(p->mutexes.stop_mutex));
+  p->stop = TRUE;
+  UNLOCK(&(p->mutexes.stop_mutex));
 }
 
 /******************************************************************************/
