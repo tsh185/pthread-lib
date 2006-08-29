@@ -28,139 +28,108 @@
 #include <string.h>
 #include <errno.h>
 #include <libgen.h>
+#include <gdsl.h>
 #include "multi_thread.h"
 #include "util.h"
 
 /* Global Variables */
-THREAD_POOL *thread_pools = NULL;
-int pools_size = 0;
-int pools_capacity = 0;
+gdsl_hash_t thread_pool_hash = NULL;
+int thread_pool_hash_capacity = INITIAL_HASH_TABLE_SIZE;
+int thread_pool_id = 0;
 
 /* Mutexes */
-pthread_mutex_t thread_pool_mutex;
-pthread_mutex_t pool_size_mutex;
-pthread_mutex_t stop_mutex;
-pthread_mutex_t status_array_mutex;
+pthread_mutex_t thread_pool_hash_mutex;
+pthread_mutex_t global_stop_mutex;
 
 int *status_array = NULL; /* used by the thread manager */
 int sizeof_status_array = 0;
 
-/* Thread status */
-int thread_hold;
-int thread_stop = 0;
-
-/* Constants */
-const char *CLASS_NM = "multi_thread.c";
+/* Global Thread status */
+int global_stop = FALSE; /* used to stop all threads in all pools */
 
 /* Private functions */
-void  _lock_stop();
-void  _unlock_stop();
-void  _lock_status_array();
-void  _unlock_status_array();
-void  _lock_thread_pool();
-void  _unlock_thread_pool();
-void  _lock_pool_size();
-void  _unlock_pool_size();
+void _create_local_mutexes();
+void _destroy_all_mutexes();
 
-void  _create_local_mutexes();
-void  _destroy_all_mutexes();
-void *_signal_handler_function(void *functions);
-int   _find_my_index(pthread_t thread);
-void  _handle_ping_signal();
+void  _lock_hash();
+void  _unlock_hash();
+void  _lock_global_stop();
+void  _unlock_global_stop();
+
+gdsl_element_t _thread_pool_alloc(void *e);
+void _thread_pool_free(gdsl_element_t e);
+const char* _thread_pool_key(gdsl_element_t e);
+void _thread_pool_print(gdsl_element_t e);
 
 /*****************************************************************************/
-/*! @fn void create_threads(void *(*func_ptr)(), void *parameter, int num_threads)
+/*! @fn void create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads)
     @brief Creates \a num_threads threads executing \a func_ptr.
 
     @param void *(void *) func_ptr ptr to the function to be executed by each thread
     @param void *parameter generic parameter, each thread will have it's own local copy.
     @param int num_threads the number of threads to create
+    @return int Id Id of the \a THREAD_POOL 
 
     Creates the threads and passes them the function to be executed and the
-    generic parameter as a void ptr. The array of threads are stored in the
-    thread_pool variable.
+    generic parameter as a void ptr. The array of threads are stored in a 
+    hash table
 */
 /*****************************************************************************/
-THREAD_POOL *create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads){
+int create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads){
   int status;
   int thread_num;
-  const char *METHOD_NM = "create_threads: ";
+  const char *METHOD_NM = "create_thread_pool: ";
   pthread_t *threads = NULL;
-  THREAD_POOL pool;
 
-  /* if first time, allocat memory */
-  if(thread_pools == NULL){
-    thread_pools = (THREAD_POOL *)malloc(sizeof(THREAD_POOL)*DEFAULT_NUM_POOLS);
-    CHECK_MALLOC(thread_pools, METHOD_NM, "failed on malloc of thread_pools");
-    memset(thread_pools,0,sizeof(THREAD_POOL)*DEFAULT_NUM_POOLS);
-
-    pools_capacity = DEFAULT_NUM_POOLS;
+  if(func_ptr == NULL || num_threads <= 0){
+    return -1;
   }
 
-  /* Create memory */
+  /* if first time, create hash table*/
+  if(thread_pool_hash == NULL){
+    thread_pool_hash = gdsl_hash_alloc(THREAD_POOL_HASH_TABLE_NAME, _thread_pool_alloc,
+		                       _thread_pool_free, _thread_pool_key, NULL, 
+				       thread_pool_hash_capacity);
+
+    CHECK_MALLOC(thread_pool_hash, METHOD_NM, "Failed creating hash table for thread pool");
+
+    _create_local_mutexes();
+    global_stop = FALSE;
+  }
+
+  /* Create memory for threads */
   threads = (pthread_t *)malloc(num_threads * sizeof(pthread_t));
   CHECK_MALLOC(threads,METHOD_NM,"Failed on malloc of pool");
-
-  /* Initalize local mutex variables */
-  _create_local_mutexes();
-
-  /* Set the thread_stop flag to false */
-
-  thread_stop = FALSE;
 
   /* Initalize all threads and pass the parameter */
   int i;
   for(i = 0; i < num_threads; i++){
-    status = pthread_create(&thread_pool[i], NULL, func_ptr, parameter);
+    status = pthread_create(&threads[i], NULL, func_ptr, parameter);
     CHECK_STATUS(status, "pthread_create", "thread bad status");
   }
 
   /* setup THREAD_POOL object */
+  THREAD_POOL pool;
   memset(&pool,0,sizeof(pool));
-  pool.id = pools_size;
+  pool.id = thread_pool_id++;
+  /* convert int id to char id */
+  sprintf(pool.char_id, "%i", pool.id);
   pool.capacity = num_threads;
   pool.size = num_threads;
   pool.pool = threads;
   pool.use_global_stop = FALSE;
   pool.stop = FALSE;
 
-  add_thread_pool(&pool);
+  gdsl_element_t elem = gdsl_hash_insert(thread_pool_hash, (void *)&pool);
+  if(elem == NULL){
+    LOG_ERROR("%s unable to insert into Thread Pool Hash Table", METHOD_NM);
+    /* destroy threads */
+    FREE(threads);
+    return -1;
+  }
 
-  return thread_pool;
+  return pool.id;
 } /* end create_threads */
-
-/******************************************************************************/
-/******************************************************************************/
-void add_thread_pool(THREAD_POOL *pool){
-  if(pool == NULL){
-      return;
-  }
-
-  if(pools_size >= pools_capacity){
-    return; /* resize it later */
-  }
-
-  int index = pools_size;
-  pools_size++;
-  COPY(thread_pools[index],pool);
-}
-
-/******************************************************************************/
-/******************************************************************************/
-void _create_local_mutexes(){
-  int status;
-  status = pthread_mutex_init(&stop_mutex, NULL);
-  CHECK_STATUS(status, "pthread_mutex_init", "stop_mutex bad status");
-
-  status = pthread_mutex_init(&thread_pool_mutex, NULL);
-  CHECK_STATUS(status, "pthread_mutex_init", "thread_pool_mutex bad status");
-
-  status = pthread_mutex_init(&pool_size_mutex, NULL);
-  CHECK_STATUS(status, "pthread_mutex_init", "pool_size_mutex bad status");
-
-  status = pthread_mutex_init(&status_array_mutex, NULL);
-  CHECK_STATUS(status, "pthread_mutex_init", "status_array_mutex bad status");
-}
 
 /******************************************************************************/
 /* Calls pthread_join to syncronize and stop all thread workers. If the       */
@@ -172,44 +141,36 @@ void _create_local_mutexes(){
 /*                    defined.  This should contain their status, 1 if ok,    */
 /*                    0 if dead or lost.                                      */
 /******************************************************************************/
-void join_threads(int *t_status){
-  int status = 0;
+void join_threads(int pool_id){
+  int status;
   void *ret_value = 0;
-  int will_check_status = 1;
   const char *METHOD_NM = "join_threads: ";
 
-  if(t_status == NULL){
-    will_check_status = 0;
-    printf("%s Joining on ALL threads reguardless of state \n", METHOD_NM);
+  char key[CHAR_ID_LEN];
+  memset(key,0,sizeof(key));
+
+  /* convert to char */
+  sprintf(key, "%i", pool_id);
+  gdsl_element_t e = gdsl_hash_remove(thread_pool_hash, key);
+
+  if(e == NULL){
+    LOG_ERROR("%s unable to find Thread Pool with id [%s]\n",METHOD_NM, key);
+    return;
   }
 
+  THREAD_POOL *p = (THREAD_POOL *)e;
+
   int i;
-  for(i = 0; i < pool_size; i++ ) {
-    if(will_check_status){
-
-      if(t_status[i]){
-
-        status = pthread_join(thread_pool[i], &ret_value);
+  for(i = 0; i < p->size; i++ ) {
+        status = pthread_join(p->pool[i], &ret_value);
         CHECK_STATUS(status, "pthread_join", "bad status");
-
-      } else {
-        printf("%s Thread [%d] is hung, not joining\n",METHOD_NM, i + 1);
-      }
-
-    } else {
-      printf("%s Going to stop thread [%d]\n",METHOD_NM, i + 1);
-      status = pthread_join(thread_pool[i], &ret_value);
-      CHECK_STATUS(status, "pthread_join", "bad status");
-    }
-
-    /* check return value? */
   }
 
   printf("%s Threads Stopped Successfully\n",METHOD_NM);
 
-  FREE(thread_pool);
-
-  _destroy_all_mutexes();
+  /* free all memory */
+  FREE(p->pool);
+  FREE(p);
 
 } /* end join_threads */
 
@@ -323,128 +284,67 @@ int timed_wait_milli(int wait_secs){
 }/* end timed_wait */
 
 
-/*****************************************************************************/
-/*! @fn int find_my_index(pthread_t thread)
-    @brief Finds the index of this thread in \a thread_pool
-    @param pthread_t thread Handle of this thread
-
-    Parses through the thread_pool looking for itself to return the index
-    of the thread. This is done so we may map it to the status array.
-
-*/
-/*****************************************************************************/
-int _find_my_index(pthread_t thread){
-  const char *METHOD_NM = "find_my_index: ";
-  int i;
-  int size = get_pool_size();
-
-  _lock_thread_pool();
-  for(i=0; i<size; i++){
-    if(pthread_equal(thread, thread_pool[i])){
-      break;
-    }
-  }
-  _unlock_thread_pool();
-
-  /* if we didn't find a thread, return a negative number */
-  if(i >= size){
-    i = -1;
-    LOG_ERROR(METHOD_NM, "Unable to match any thread in thread_pool");
-  }
-
-  return i;
-}
-
 /* Mutex Operations */
-/*************************************/
-/*    Stop Working Operations        */
-/*************************************/
-void _lock_stop() {
-  int status = pthread_mutex_lock(&stop_mutex);
-  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (stop_mutex)");
+void _lock_global_stop() {
+  int status = pthread_mutex_lock(&global_stop_mutex);
+  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (global_stop_mutex)");
 }
 
-void _unlock_stop() {
-  int status = pthread_mutex_unlock(&stop_mutex);
-  CHECK_STATUS(status, "pthread_mutex_unlock", "bad status (stop_mutex)")
+void _unlock_global_stop() {
+  int status = pthread_mutex_unlock(&global_stop_mutex);
+  CHECK_STATUS(status, "pthread_mutex_unlock", "bad status (global_stop_mutex)")
 }
 
-/*************************************/
-/*   Status Array Operations         */
-/*************************************/
-void _lock_status_array(){
-  int status = pthread_mutex_lock(&status_array_mutex);
-  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (status_array_mutex)");
+void _lock_thread_pool_hash(){
+  int status = pthread_mutex_lock(&thread_pool_hash_mutex);
+  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (thread_pool_hash_mutex)");
 }
 
-void _unlock_status_array(){
-  int status = pthread_mutex_unlock(&status_array_mutex);
-  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (status_array_mutex)");
+void _unlock_thread_pool_hash(){
+  int status = pthread_mutex_unlock(&thread_pool_hash_mutex);
+  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (thread_pool_hash_mutex)");
 }
 
+/******************************************************************************/
+/******************************************************************************/
+void _create_local_mutexes(){
+  int status;
 
-/*************************************/
-/*   Pool Size Mutex Operations      */
-/*************************************/
-void _lock_thread_pool(){
-  int status = pthread_mutex_lock(&thread_pool_mutex);
-  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (thread_pool_mutex)");
+  status = pthread_mutex_init(&thread_pool_hash_mutex, NULL);
+  CHECK_STATUS(status, "pthread_mutex_init", "thread_pool_hash_mutex bad status");
+
+  status = pthread_mutex_init(&global_stop_mutex, NULL);
+  CHECK_STATUS(status, "pthread_mutex_init", "global_stop_mutex bad status");
 }
 
-void _unlock_thread_pool(){
-  int status = pthread_mutex_unlock(&thread_pool_mutex);
-  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (thread_pool_mutex)");
-}
+/******************************************************************************/
+/******************************************************************************/
+void _destroy_all_mutexes(){
+  int status;
 
-/*************************************/
-/*   Thread Pool Mutex Operations    */
-/*************************************/
-void _lock_pool_size(){
-  int status = pthread_mutex_lock(&pool_size_mutex);
-  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (pool_size_mutex)");
-}
+  status = pthread_mutex_destroy(&global_stop_mutex);
+  CHECK_STATUS(status,"pthread_mutex_destroy", "bad status (global_stop_mutex)");
 
-void _unlock_pool_size(){
-  int status = pthread_mutex_unlock(&pool_size_mutex);
-  CHECK_STATUS(status, "pthread_mutex_lock", "bad status (pool_size_mutex)");
+  status = pthread_mutex_destroy(&thread_pool_hash_mutex);
+  CHECK_STATUS(status,"pthread_mutex_destroy", "bad status (thread_pool_hash_mutex)");
 }
 
 /******************************************************************************/
 /*********************  Safe/Public Operations  *******************************/
 /******************************************************************************/
 
-/******************************************************************************/
-/* Destroys all mutexes created in the create_threads() function              */
-/*                                                                            */
-/* Parameters: None                                                           */
-/******************************************************************************/
-
-void _destroy_all_mutexes(){
-  int status;
-
-  status = pthread_mutex_destroy(&stop_mutex);
-  CHECK_STATUS(status,"pthread_mutex_destroy", "bad status (stop_mutex)");
-
-  status = pthread_mutex_destroy(&thread_pool_mutex);
-  CHECK_STATUS(status,"pthread_mutex_destroy", "bad status (thread_pool_mutex)");
-
-  status = pthread_mutex_destroy(&pool_size_mutex);
-  CHECK_STATUS(status,"pthread_mutex_destroy", "bad status (pool_size_mutex)");
-
-  status = pthread_mutex_destroy(&status_array_mutex);
-  CHECK_STATUS(status,"pthread_mutex_destroy", "bad status (status_array_mutex)");
-}
 
 /* Thread Operations */
 /*************************************************/
-/* Safe (Mutex stop_working is locked)           */
-/* Sets worker_stop to TRUE.  This method should */
-/*  be used to tell the workers to stop.         */
+/*! @fn void stop_all_threads()
+    @brief Stops all threads in all pools
+ */
 /*************************************************/
-void stop_threads() {
-  _lock_stop();
-  thread_stop = 1;
-  _unlock_stop();
+void stop_all_pools() {
+  _lock_global_stop();
+  /* set each stop variable in each thread pool to true */
+  global_stop = TRUE;
+  _unlock_global_stop();
 }
 
 /******************************************************************************/
@@ -457,46 +357,66 @@ void stop_threads() {
     This function has a mutex and, therefore, is thread safe.
 */
 /******************************************************************************/
-int should_stop() {
+int should_stop_all() {
   int should_stop = 0;
 
-  _lock_stop();
-  should_stop = thread_stop;
-  _unlock_stop();
+  _lock_global_stop();
+  should_stop = global_stop;
+  _unlock_global_stop();
 
   return should_stop;
 }
 
 /******************************************************************************/
+/******************************************************************************/
+void stop_pool(int id){
+  char key[CHAR_ID_LEN];
+  memset(key,0,sizeof(key));
+
+  /* convert to char */
+  sprintf(key, "%i", id);
+  gdsl_element_t e = gdsl_hash_search(thread_pool_hash, key);
+
+  if(e == NULL){
+    LOG_ERROR("Unable to stop pool with id [%s]\n",key);
+    return;
+  }
+
+  THREAD_POOL *p = (THREAD_POOL *)e;
+  /* lock */
+  p->stop = TRUE;
+  /* unlock */
+
+}
+
+/******************************************************************************/
 /*! @fun void set_stop(int stop)
-    @brief Sets the thread_stop variable to the parameter \a stop.
-    @param int stop flag to indicate whether or not to stop the threads.
-
-    This function can be used to set the \a thread_stop variable for whatever
-    purpose.
-
-    This function has a mutex and, therefore, is thread safe.
 */
 /******************************************************************************/
-void set_stop(int stop){
-  _lock_stop();
-  thread_stop = stop;
-  _unlock_stop();
+int should_stop_pool(int id){
+  int stop;
+
+  char key[CHAR_ID_LEN];
+  memset(key,0,sizeof(key));
+
+  /* convert to char */
+  sprintf(key, "%i", id);
+  gdsl_element_t e = gdsl_hash_search(thread_pool_hash, key);
+
+  if(e == NULL){
+    LOG_ERROR("Unable to find pool to see if we should_stop for id [%s]\n", key);
+    return FALSE;
+  }
+
+  THREAD_POOL *p = (THREAD_POOL *)e;
+
+  /* lock */
+  stop = p->stop;
+  /* unlock */
+
+  return stop;
 }
 
-/******************************************************************************/
-/*! @fn int get_pool_size()
-    @brief Returns the \a pool_size
-*/
-/******************************************************************************/
-int get_pool_size(){
-  int size = 0;
-  _lock_pool_size();
-  size = pool_size;
-  _unlock_pool_size();
-
-  return size;
-}
 /******************************************************************************/
 /*! @fn int create_status_array()
     @brief Creates the array in which the threads update to indicate status
@@ -508,6 +428,7 @@ int get_pool_size(){
     This function has a mutex and, therefore, is thread safe.
 */
 /******************************************************************************/
+/*
 void create_status_array(){
   const char *METHOD_NM = "create_status_array: ";
   int rc = 0;
@@ -515,7 +436,7 @@ void create_status_array(){
   _lock_status_array();
 
   FREE(status_array);
-  sizeof_status_array = pool_size;
+  sizeof_status_array = 10;
   status_array = (int *)malloc(sizeof(int)*sizeof_status_array);
 
   if(status_array == NULL){
@@ -525,9 +446,9 @@ void create_status_array(){
 
   _unlock_status_array();
 
-  /* exit if error */
   if(rc){ exit(rc);}
 }
+  */
 
 /******************************************************************************/
 /*!  @fn void init_status_array()
@@ -538,12 +459,11 @@ void create_status_array(){
      is thread safe.
 */
 /******************************************************************************/
+/*
 void init_status_array(){
-  /* if thread pool changed, recreate array */
-  if(pool_size != sizeof_status_array){
+  if(10 != sizeof_status_array){
     create_status_array();
   } else {
-    /* otherwise, just set all elements to zero */
     _lock_status_array();
 
     memset(status_array, 0, sizeof(int)*sizeof_status_array);
@@ -551,6 +471,7 @@ void init_status_array(){
     _unlock_status_array();
   }
 }
+*/
 
 /******************************************************************************/
 /*! @fn int *get_status_array()
@@ -559,6 +480,7 @@ void init_status_array(){
     This function has a mutex lock around it and, therefore, is thread safe.
 */
 /******************************************************************************/
+/*
 int *get_status_array(){
   int *sa = NULL;
 
@@ -568,7 +490,7 @@ int *get_status_array(){
 
   return sa;
 }
-
+*/
 /******************************************************************************/
 /*! @fn BOOL set_status_element(int index, int status)
     @brief Sets a single int of the \a status_array variable
@@ -580,6 +502,7 @@ int *get_status_array(){
 
 */
 /******************************************************************************/
+/*
 BOOL set_status_element(int index, int status){
   BOOL rc = FALSE;
 
@@ -594,7 +517,56 @@ BOOL set_status_element(int index, int status){
 
   return rc;
 }
-
+*/
 /******************************************************************************/
 /********************  UnSafe/Private Operations  *****************************/
 /******************************************************************************/
+gdsl_element_t _thread_pool_alloc(void *e){
+  const char *METHOD_NM = "_thread_pool_alloc: ";
+
+  THREAD_POOL *p = (THREAD_POOL *)e;
+
+  THREAD_POOL *pool = (THREAD_POOL *)malloc(sizeof(THREAD_POOL));
+  CHECK_MALLOC(pool, METHOD_NM, "malloc failed on pool"); 
+  memset(pool,0,sizeof(THREAD_POOL));
+
+  memcpy(pool, p, sizeof(THREAD_POOL));
+
+  return(gdsl_element_t)pool;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+void _thread_pool_free(gdsl_element_t e){
+  if(e == NULL){
+    return;
+  }
+
+  THREAD_POOL *p = (THREAD_POOL *)e;
+  FREE(p->pool);
+  FREE(p);
+}
+
+/******************************************************************************/
+/******************************************************************************/
+const char * _thread_pool_key(gdsl_element_t e){
+  THREAD_POOL *p = (THREAD_POOL *)e;
+  return p->char_id;
+}
+
+/******************************************************************************/
+/******************************************************************************/
+void _thread_pool_print(gdsl_element_t e){
+  if(e == NULL){
+    return;
+  }
+
+  THREAD_POOL *p = (THREAD_POOL *)e;
+
+  printf("Id [%d]\n",p->id);
+  printf("Capacity [%d]\n",p->capacity);
+  printf("Size [%d]\n", p->size);
+  printf("Pool [%d]\n", p->pool);
+  printf("Use Global Stop? [%d]\n", p->use_global_stop);
+  printf("Stop? [%d]\n",p->stop);
+}

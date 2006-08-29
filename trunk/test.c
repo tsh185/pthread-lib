@@ -32,7 +32,7 @@ void *print_me(){
 }
 
 int main(){
-	create_threads((void *)print_me, NULL, 4);
-	join_threads(NULL);
-
+	int id = create_thread_pool((void *)print_me, NULL, 4);
+	join_threads(id);
+        printf("DONE\n");	
 }

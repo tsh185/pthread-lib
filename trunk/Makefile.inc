@@ -1,18 +1,23 @@
 # PThreads
 LIBPTHREAD=pthread
-PTHREADCFLAGS=-D_POSIX_C_SOURCE=199506L -D_HPUX_SOURCE
+LIBGDSL=-L/usr/local/lib -lgdsl
+LIBEXPAT=libexpat
+LIBSCEW=libscew
+
+PTHREADCFLAGS=
+blah=-D_POSIX_C_SOURCE=199506L -D_HPUX_SOURCE
 
 # C Compiler
-CC=/usr/bin/cc
-CFLAGS=-g -O -Ae -DHPUX $(PTHREADCFLAGS)
-CINCL=
+CC=cc
+CFLAGS=-g -O
+CINCL=-I/usr/local/include/gdsl
 LINK_FLAGS=-g
 DEBUG=-DDEBUG 
 
-# fully-qualified UNIX commands
-RM=/usr/bin/rm -f
-CHMOD=/usr/bin/chmod
-ECHO=/usr/bin/echo
+# commands
+RM=rm -f
+CHMOD=chmod
+ECHO=echo
 
 #
 # Suffix rules

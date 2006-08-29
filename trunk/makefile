@@ -20,7 +20,7 @@ MULTI_THREAD_OBJS = \
 
 TEST_OBJS = \
 	test.o \
-	multi_thread.o
+	multi_thread.o 
 
 TEST_QUEUE_OBJS = \
 	test_queue.o \
@@ -75,6 +75,8 @@ task.o: task.c task.h
 
 util.o: util.c util.h
 
+gdsl_hash.o: gdsl_hash.c gdsl_hash.h gdsl_types.h
+
 gen_queue.o: gen_queue.c gen_queue.h
 
 example1.o: example1.c
@@ -87,7 +89,7 @@ example3.o: example3.c
 test: $(TEST_OBJS)
 	@$(ECHO) "\n*** Target: $@ (linking)"
 	$(CC) $(LINK_FLAGS) $(CINCL) $(TEST_OBJS) -o $@ \
-	    -l$(LIBPTHREAD)
+	    -l$(LIBPTHREAD) $(LIBGDSL)
 	@$(CHMOD) 750 $@
 
 test_queue: $(TEST_QUEUE_OBJS)

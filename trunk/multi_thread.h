@@ -31,22 +31,34 @@
 /* Error Codes */
 #define ERROR_CODE_SIG_HANDLER_NO_FUNCTIONS 2
 
-#define DEFAULT_NUM_POOLS 5
+#define CHAR_ID_LEN 15
+#define THREAD_POOL_HASH_TABLE_NAME "Thread Pool Hash Table"
+#define INITIAL_HASH_TABLE_SIZE 10
 
 /* Structs */
+
+struct thread_pool_mutex_struct {
+  pthread_mutex_t stop_mutex;
+  pthread_mutex_t status_array_mutex;
+};
+typedef struct thread_pool_mutex_struct THREAD_POOL_MUTEX;
+
 struct thread_pool_struct {
     int id;
+    char char_id[CHAR_ID_LEN];
     int capacity;
     int size;
     pthread_t *pool;
     int use_global_stop;
     int stop;
-}
+    int *status_array;
+    struct thread_pool_mutex_struct mutexes;
+};
 typedef struct thread_pool_struct THREAD_POOL;
 
 /* Public Methods */
 pthread_t *create_threads(void *(*func_ptr)(), void *parameter, int num_threads);
-void join_threads(int *t_status);
+void join_threads(int id);
 int  timed_wait(int wait_secs);
 int  timed_wait_milli(int wait_secs);
 
