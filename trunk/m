@@ -1,2 +1,0 @@
-cc -c multi_thread.c
-cc -o test test.c multi_thread.o -lpthread
