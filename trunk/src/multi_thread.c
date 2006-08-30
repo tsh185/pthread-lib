@@ -108,14 +108,21 @@ int create_thread_pool(void *(*func_ptr)(), void *parameter, int num_threads){
   CHECK_MALLOC(threads,METHOD_NM,"Failed on malloc of pool");
 
   /* Create memory for the parameter */
-  pool.parameter.id = id;
-  pool.parameter.user_parameter = parameter;
+  pool.parameter = (PARAMETER *)malloc(sizeof(PARAMETER));
+  CHECK_MALLOC(pool.parameter, METHOD_NM, "Failed on malloc of PARAMETER");
+
+  pool.parameter->id = id;
+  pool.parameter->user_parameter = parameter;
+
+  /* Create memory for the status array */
+  pool.status_array = (int *)malloc(sizeof(int)*num_threads);
+  memset(pool.status_array,0,sizeof(int)*num_threads);
 
   /* Initalize all threads and pass the parameter */
   /* Note: the user supplied parameter is wrapped in the private parameter */
   int i;
   for(i = 0; i < num_threads; i++){
-    status = pthread_create(&threads[i], NULL, func_ptr, (void *)&(pool.parameter));
+    status = pthread_create(&threads[i], NULL, func_ptr, (void *)(pool.parameter));
     CHECK_STATUS(status, "pthread_create", "thread bad status");
   }
 
@@ -179,6 +186,8 @@ void join_threads(int pool_id){ /* may need to put a function to free the parame
 
   /* free all memory */
   FREE(p->pool);
+  FREE(p->parameter);
+  FREE(p->status_array);
   FREE(p);
 
 } /* end join_threads */
@@ -387,7 +396,7 @@ int should_stop_pool(int id){
   memset(key,0,sizeof(key));
 
   /* convert to char */
-  sprintf(key, "%i", id);
+  INT_TO_CHAR(id,key);
   gdsl_element_t e = gdsl_hash_search(thread_pool_hash, key);
 
   if(e == NULL){
@@ -552,6 +561,8 @@ void _thread_pool_free(gdsl_element_t e){
 
   THREAD_POOL *p = (THREAD_POOL *)e;
   FREE(p->pool);
+  FREE(p->parameter);
+  FREE(p->status_array);
   FREE(p);
 }
 

@@ -59,7 +59,7 @@ struct thread_pool_struct {
     int stop;
     int *status_array;
     struct thread_pool_mutex_struct mutexes;
-    struct parameter_struct parameter;
+    struct parameter_struct *parameter;
 };
 typedef struct thread_pool_struct THREAD_POOL;
 

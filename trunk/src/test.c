@@ -30,10 +30,12 @@
 void *print_me(void *e){
   PARAMETER *p = (PARAMETER *)e;
   int id = p->id;
-  int amt = 0;
 
-  while(!should_stop_pool(id)){
+  printf("My id [%d]\n",id);
+
+  while(!should_stop_all()){
     timed_wait(1);
+    printf("I'm Running 2!\n");
   }
 
   printf("done with print_me\n");
@@ -43,8 +45,11 @@ void *print_me_pool(void *e){
   PARAMETER *p = (PARAMETER *)e;
   int id = p->id;
 
-  while(!should_stop_pool(id)){
-    timed_wait(1);
+  printf("My id [%d]\n",id);
+
+  while(!should_stop_all()){
+	  printf("Running!\n");
+	  timed_wait(1);
   }
 
   printf("done with print_me_pool\n");
@@ -52,16 +57,13 @@ void *print_me_pool(void *e){
 
 
 int main(){
-	int id = create_thread_pool((void *)print_me,NULL, 4);
-	int id2 = create_thread_pool((void *)print_me_pool, NULL, 2);
+	int id = create_thread_pool((void *)print_me_pool,NULL, 5);
+	int id2 = create_thread_pool((void *)print_me,NULL, 10);
 
-	timed_wait(1);
-	stop_pool(id2);
-	join_threads(id2);
-
-	timed_wait(2);
-	stop_pool(id);
+	timed_wait(10);
+	stop_all_pools();
 	join_threads(id);
+	join_threads(id2);
 
         printf("DONE\n");	
 }
