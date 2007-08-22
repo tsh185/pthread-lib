@@ -1,0 +1,14 @@
+#summary Design Document pthread-lib
+= Introduction =
+
+This is the design document for pthread-lib. You will find the exact specification of what each piece of code was designed.
+
+
+= Details =
+
+Add your content here.  Format your content with:
+  * Text in *bold* or _italic_
+  * Headings, paragraphs, and lists
+  * Automatic links to other wiki pages
+
+
