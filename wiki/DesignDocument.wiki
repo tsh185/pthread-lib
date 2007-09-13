@@ -40,11 +40,28 @@ This is the design document for pthread-lib. You will find the exact specificati
 
 
 == 2 Thread Manager ==
+*2.1* beginManaging()
+
+*2.2* stopManaging()
+
+*2.3* checkThreads()
+
+*2.4* stopThreadPool()
 
 == 3 Signal Handler ==
+*3.1* int signal_handler_create(FUNCTION_PTRS *function_ptrs)
+
+*3.2* void stop_signal_manager()
+
+*3.3* void destroy_signal_manager()
+
+*3.4* void *_signal_handler_function(void *functions)
+
+*3.5* int block_all_signals()
+
+
 
 == 4 Wrapper Functions ==
-
 
 
 
