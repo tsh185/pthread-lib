@@ -9,8 +9,7 @@ The following commands are specific to Ubuntu, but can be easily transferred to 
 
 === Install ===
 type {{{ sudo apt-get install anjuta }}} in the console OR
-you can use your favorite package manager to download it OR
-you can download it from the Anjuta web site.
+you can use your favorite package manager to download it
 
 The following are Anjuta dependencies:
   * blah
