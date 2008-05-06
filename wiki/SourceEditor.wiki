@@ -1,13 +1,29 @@
 #summary Instructions on how to install and setup a working environment using the same editor I use.
+#labels anjuta,IDE,Phase-Implementation
 
-= Introduction =
+=currently under construction=
 
-Add your content here.
+In order to use this library, you will need to run on a {{{*}}}nix environment. I used Ubuntu Linux to develop it.
 
+The following commands are specific to Ubuntu, but can be easily transferred to any Linux distribution.
 
-= Details =
+=== Install ===
+type {{{ sudo apt-get install anjuta }}} in the console OR
+you can use your favorite package manager to download it OR
+you can download it from the Anjuta web site.
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+The following are Anjuta dependencies:
+  * blah
+  * blah2
+
+=== Download ===
+
+=== Create A Project ===
+
+=== Compile And Link It ===
+  # Right-click on the project
+  # Choose Properties
+  # Enter -lpthread in as a library
+  # Go to Build-->Run Autogenerate (this will execute libtool and update it with the library reference)
+
+=== Build The Library ===
