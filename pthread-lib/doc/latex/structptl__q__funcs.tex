@@ -1,0 +1,83 @@
+\hypertarget{structptl__q__funcs}{
+\section{ptl\_\-q\_\-funcs Struct Reference}
+\label{structptl__q__funcs}\index{ptl\_\-q\_\-funcs@{ptl\_\-q\_\-funcs}}
+}
+{\tt \#include $<$ptl\_\-queue.h$>$}
+
+\subsection*{Data Fields}
+\begin{CompactItemize}
+\item 
+int($\ast$ \hyperlink{structptl__q__funcs_7a825aba959301d3d51e1b397e4b4569}{add} )(struct \hyperlink{structptl__q}{ptl\_\-q}, void $\ast$)
+\begin{CompactList}\small\item\em Inserts the specified element into this queue if it is possible to do so immediately without violating capacity restrictions, returning true upon success and false if no space is currently available. \item\end{CompactList}\item 
+int($\ast$ \hyperlink{structptl__q__funcs_9b5b84b8bfd46f1c284339c6a33be29e}{add\_\-wait} )(struct \hyperlink{structptl__q}{ptl\_\-q}, void $\ast$, long)
+\begin{CompactList}\small\item\em inserts the specified element at the tail of this queue, waiting if necessary up to the specified wait time for space to become available. \item\end{CompactList}\item 
+void($\ast$ \hyperlink{structptl__q__funcs_edefac643e9f7206be76e0aeede68e0a}{clear} )(struct \hyperlink{structptl__q}{ptl\_\-q})
+\begin{CompactList}\small\item\em Removes all of the elements from this queue. \item\end{CompactList}\item 
+void $\ast$($\ast$ \hyperlink{structptl__q__funcs_c58092f69ff82e52e3fbb8cf31eb2adc}{peek} )(struct \hyperlink{structptl__q}{ptl\_\-q})
+\begin{CompactList}\small\item\em Retrieves, but does not remove, the head of this queue. \item\end{CompactList}\item 
+void $\ast$($\ast$ \hyperlink{structptl__q__funcs_d321c7f9c2972b4791fd827dca5f04c8}{get} )(struct \hyperlink{structptl__q}{ptl\_\-q})
+\begin{CompactList}\small\item\em Retrieves and removes the head of this queue. \item\end{CompactList}\item 
+void $\ast$($\ast$ \hyperlink{structptl__q__funcs_a580c7543fb38eaffee9c40c470da528}{get\_\-wait} )(struct \hyperlink{structptl__q}{ptl\_\-q}, long)
+\begin{CompactList}\small\item\em Retrieves and removes the head of this queue, waiting up to the specified wait time if necessary for an element to become available. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Field Documentation}
+\hypertarget{structptl__q__funcs_7a825aba959301d3d51e1b397e4b4569}{
+\index{ptl\_\-q\_\-funcs@{ptl\_\-q\_\-funcs}!add@{add}}
+\index{add@{add}!ptl_q_funcs@{ptl\_\-q\_\-funcs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int($\ast$ {\bf ptl\_\-q\_\-funcs::add})(struct {\bf ptl\_\-q}, void $\ast$)}}
+\label{structptl__q__funcs_7a825aba959301d3d51e1b397e4b4569}
+
+
+Inserts the specified element into this queue if it is possible to do so immediately without violating capacity restrictions, returning true upon success and false if no space is currently available. 
+
+\hypertarget{structptl__q__funcs_9b5b84b8bfd46f1c284339c6a33be29e}{
+\index{ptl\_\-q\_\-funcs@{ptl\_\-q\_\-funcs}!add\_\-wait@{add\_\-wait}}
+\index{add\_\-wait@{add\_\-wait}!ptl_q_funcs@{ptl\_\-q\_\-funcs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int($\ast$ {\bf ptl\_\-q\_\-funcs::add\_\-wait})(struct {\bf ptl\_\-q}, void $\ast$, long)}}
+\label{structptl__q__funcs_9b5b84b8bfd46f1c284339c6a33be29e}
+
+
+inserts the specified element at the tail of this queue, waiting if necessary up to the specified wait time for space to become available. 
+
+\hypertarget{structptl__q__funcs_edefac643e9f7206be76e0aeede68e0a}{
+\index{ptl\_\-q\_\-funcs@{ptl\_\-q\_\-funcs}!clear@{clear}}
+\index{clear@{clear}!ptl_q_funcs@{ptl\_\-q\_\-funcs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void($\ast$ {\bf ptl\_\-q\_\-funcs::clear})(struct {\bf ptl\_\-q})}}
+\label{structptl__q__funcs_edefac643e9f7206be76e0aeede68e0a}
+
+
+Removes all of the elements from this queue. 
+
+It will block all operations until it is finished. \hypertarget{structptl__q__funcs_c58092f69ff82e52e3fbb8cf31eb2adc}{
+\index{ptl\_\-q\_\-funcs@{ptl\_\-q\_\-funcs}!peek@{peek}}
+\index{peek@{peek}!ptl_q_funcs@{ptl\_\-q\_\-funcs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$($\ast$ {\bf ptl\_\-q\_\-funcs::peek})(struct {\bf ptl\_\-q})}}
+\label{structptl__q__funcs_c58092f69ff82e52e3fbb8cf31eb2adc}
+
+
+Retrieves, but does not remove, the head of this queue. 
+
+This function is read-only and therefore does not block. \hypertarget{structptl__q__funcs_d321c7f9c2972b4791fd827dca5f04c8}{
+\index{ptl\_\-q\_\-funcs@{ptl\_\-q\_\-funcs}!get@{get}}
+\index{get@{get}!ptl_q_funcs@{ptl\_\-q\_\-funcs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$($\ast$ {\bf ptl\_\-q\_\-funcs::get})(struct {\bf ptl\_\-q})}}
+\label{structptl__q__funcs_d321c7f9c2972b4791fd827dca5f04c8}
+
+
+Retrieves and removes the head of this queue. 
+
+It will block until an element is available. This function will block once it enters the function mutex. \hypertarget{structptl__q__funcs_a580c7543fb38eaffee9c40c470da528}{
+\index{ptl\_\-q\_\-funcs@{ptl\_\-q\_\-funcs}!get\_\-wait@{get\_\-wait}}
+\index{get\_\-wait@{get\_\-wait}!ptl_q_funcs@{ptl\_\-q\_\-funcs}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$($\ast$ {\bf ptl\_\-q\_\-funcs::get\_\-wait})(struct {\bf ptl\_\-q}, long)}}
+\label{structptl__q__funcs_a580c7543fb38eaffee9c40c470da528}
+
+
+Retrieves and removes the head of this queue, waiting up to the specified wait time if necessary for an element to become available. 
+
+This function will block once it enters the function mutex. 
+
+The documentation for this struct was generated from the following file:\begin{CompactItemize}
+\item 
+\hyperlink{ptl__queue_8h}{ptl\_\-queue.h}\end{CompactItemize}

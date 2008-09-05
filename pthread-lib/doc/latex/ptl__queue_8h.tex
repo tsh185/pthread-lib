@@ -1,0 +1,84 @@
+\hypertarget{ptl__queue_8h}{
+\section{ptl\_\-queue.h File Reference}
+\label{ptl__queue_8h}\index{ptl\_\-queue.h@{ptl\_\-queue.h}}
+}
+\subsection*{Data Structures}
+\begin{CompactItemize}
+\item 
+struct \hyperlink{structptl__q__element}{ptl\_\-q\_\-element}
+\item 
+struct \hyperlink{structptl__q}{ptl\_\-q}
+\item 
+struct \hyperlink{structptl__q__funcs}{ptl\_\-q\_\-funcs}
+\end{CompactItemize}
+\subsection*{Typedefs}
+\begin{CompactItemize}
+\item 
+typedef struct \hyperlink{structptl__q}{ptl\_\-q} $\ast$ \hyperlink{ptl__queue_8h_48106b2ae9d7c912d48e0681ae7c858d}{ptl\_\-q\_\-t}
+\item 
+typedef struct \hyperlink{structptl__q__funcs}{ptl\_\-q\_\-funcs} $\ast$ \hyperlink{ptl__queue_8h_ba3abd80cf59842100faf3ca5f8ca90c}{ptl\_\-q\_\-funcs\_\-t}
+\item 
+typedef struct \hyperlink{structptl__q__element}{ptl\_\-q\_\-element} $\ast$ \hyperlink{ptl__queue_8h_dcdd70a3f159feaee10aed931ec7f4b0}{ptl\_\-q\_\-element\_\-t}
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+\hyperlink{structptl__q}{ptl\_\-q\_\-t} \hyperlink{ptl__queue_8h_696932e0d9bd62768e4c9a935d2ced66}{create\_\-queue} (\hyperlink{structptl__q__funcs}{ptl\_\-q\_\-funcs\_\-t} q\_\-functions)
+\begin{CompactList}\small\item\em Creates the queue assigning the function pointers. \item\end{CompactList}\item 
+\hyperlink{structptl__q__element}{ptl\_\-q\_\-element\_\-t} \hyperlink{ptl__queue_8h_48d8984820cd9ae5f326f33294f90bc1}{create\_\-element} (void $\ast$value)
+\item 
+void \hyperlink{ptl__queue_8h_7db16d7b347a2eab4b5cb6068df1dbbe}{destroy\_\-queue} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q)
+\begin{CompactList}\small\item\em Clears the queue, including freeing any memory used/create during the \hyperlink{ptl__queue_8c_696932e0d9bd62768e4c9a935d2ced66}{create\_\-queue()} call. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Typedef Documentation}
+\hypertarget{ptl__queue_8h_dcdd70a3f159feaee10aed931ec7f4b0}{
+\index{ptl\_\-queue.h@{ptl\_\-queue.h}!ptl\_\-q\_\-element\_\-t@{ptl\_\-q\_\-element\_\-t}}
+\index{ptl\_\-q\_\-element\_\-t@{ptl\_\-q\_\-element\_\-t}!ptl_queue.h@{ptl\_\-queue.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf ptl\_\-q\_\-element}$\ast$ {\bf ptl\_\-q\_\-element\_\-t}}}
+\label{ptl__queue_8h_dcdd70a3f159feaee10aed931ec7f4b0}
+
+
+\hypertarget{ptl__queue_8h_ba3abd80cf59842100faf3ca5f8ca90c}{
+\index{ptl\_\-queue.h@{ptl\_\-queue.h}!ptl\_\-q\_\-funcs\_\-t@{ptl\_\-q\_\-funcs\_\-t}}
+\index{ptl\_\-q\_\-funcs\_\-t@{ptl\_\-q\_\-funcs\_\-t}!ptl_queue.h@{ptl\_\-queue.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf ptl\_\-q\_\-funcs}$\ast$ {\bf ptl\_\-q\_\-funcs\_\-t}}}
+\label{ptl__queue_8h_ba3abd80cf59842100faf3ca5f8ca90c}
+
+
+\hypertarget{ptl__queue_8h_48106b2ae9d7c912d48e0681ae7c858d}{
+\index{ptl\_\-queue.h@{ptl\_\-queue.h}!ptl\_\-q\_\-t@{ptl\_\-q\_\-t}}
+\index{ptl\_\-q\_\-t@{ptl\_\-q\_\-t}!ptl_queue.h@{ptl\_\-queue.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}typedef struct {\bf ptl\_\-q}$\ast$ {\bf ptl\_\-q\_\-t}}}
+\label{ptl__queue_8h_48106b2ae9d7c912d48e0681ae7c858d}
+
+
+
+
+\subsection{Function Documentation}
+\hypertarget{ptl__queue_8h_48d8984820cd9ae5f326f33294f90bc1}{
+\index{ptl\_\-queue.h@{ptl\_\-queue.h}!create\_\-element@{create\_\-element}}
+\index{create\_\-element@{create\_\-element}!ptl_queue.h@{ptl\_\-queue.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ptl\_\-q\_\-element\_\-t} create\_\-element (void $\ast$ {\em value})}}
+\label{ptl__queue_8h_48d8984820cd9ae5f326f33294f90bc1}
+
+
+\hypertarget{ptl__queue_8h_696932e0d9bd62768e4c9a935d2ced66}{
+\index{ptl\_\-queue.h@{ptl\_\-queue.h}!create\_\-queue@{create\_\-queue}}
+\index{create\_\-queue@{create\_\-queue}!ptl_queue.h@{ptl\_\-queue.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ptl\_\-q\_\-t} create\_\-queue ({\bf ptl\_\-q\_\-funcs\_\-t} {\em q\_\-functions})}}
+\label{ptl__queue_8h_696932e0d9bd62768e4c9a935d2ced66}
+
+
+Creates the queue assigning the function pointers. 
+
+\hypertarget{ptl__queue_8h_7db16d7b347a2eab4b5cb6068df1dbbe}{
+\index{ptl\_\-queue.h@{ptl\_\-queue.h}!destroy\_\-queue@{destroy\_\-queue}}
+\index{destroy\_\-queue@{destroy\_\-queue}!ptl_queue.h@{ptl\_\-queue.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void destroy\_\-queue ({\bf ptl\_\-q\_\-t} {\em q})}}
+\label{ptl__queue_8h_7db16d7b347a2eab4b5cb6068df1dbbe}
+
+
+Clears the queue, including freeing any memory used/create during the \hyperlink{ptl__queue_8c_696932e0d9bd62768e4c9a935d2ced66}{create\_\-queue()} call. 
+
+Calls clear() - which should handle any queue element freeing. 

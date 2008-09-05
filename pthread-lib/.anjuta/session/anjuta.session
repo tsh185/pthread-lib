@@ -1,0 +1,14 @@
+
+[Anjuta]
+Maximized=1
+Geometry=1279x949+0+25
+
+[Execution]
+Program arguments=
+Run in terminal=1
+Last selected uri=file:///home/nick/Projects/pthread-lib/src/pthread_lib
+Program uri=file:///home/nick/Projects/pthread-lib/src/pthread_lib
+Stop at beginning=1
+
+[Debugger]
+Watch= e%%% first

@@ -1,0 +1,55 @@
+\hypertarget{ptl__queue_8c}{
+\section{ptl\_\-queue.c File Reference}
+\label{ptl__queue_8c}\index{ptl\_\-queue.c@{ptl\_\-queue.c}}
+}
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$assert.h$>$}\par
+{\tt \#include $<$malloc.h$>$}\par
+{\tt \#include \char`\"{}ptl\_\-queue.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int \hyperlink{ptl__queue_8c_0e7cb4ec2882613b8974123553b180ed}{\_\-check\_\-function\_\-ptrs} (\hyperlink{structptl__q__funcs}{ptl\_\-q\_\-funcs\_\-t} q\_\-functions)
+\item 
+\hyperlink{structptl__q}{ptl\_\-q\_\-t} \hyperlink{ptl__queue_8c_696932e0d9bd62768e4c9a935d2ced66}{create\_\-queue} (\hyperlink{structptl__q__funcs}{ptl\_\-q\_\-funcs\_\-t} q\_\-functions)
+\begin{CompactList}\small\item\em Creates the queue assigning the function pointers. \item\end{CompactList}\item 
+\hyperlink{structptl__q__element}{ptl\_\-q\_\-element\_\-t} \hyperlink{ptl__queue_8c_48d8984820cd9ae5f326f33294f90bc1}{create\_\-element} (void $\ast$value)
+\item 
+void \hyperlink{ptl__queue_8c_7db16d7b347a2eab4b5cb6068df1dbbe}{destroy\_\-queue} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q)
+\begin{CompactList}\small\item\em Clears the queue, including freeing any memory used/create during the \hyperlink{ptl__queue_8c_696932e0d9bd62768e4c9a935d2ced66}{create\_\-queue()} call. \item\end{CompactList}\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\hypertarget{ptl__queue_8c_0e7cb4ec2882613b8974123553b180ed}{
+\index{ptl\_\-queue.c@{ptl\_\-queue.c}!\_\-check\_\-function\_\-ptrs@{\_\-check\_\-function\_\-ptrs}}
+\index{\_\-check\_\-function\_\-ptrs@{\_\-check\_\-function\_\-ptrs}!ptl_queue.c@{ptl\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int \_\-check\_\-function\_\-ptrs ({\bf ptl\_\-q\_\-funcs\_\-t} {\em q\_\-functions})}}
+\label{ptl__queue_8c_0e7cb4ec2882613b8974123553b180ed}
+
+
+\hypertarget{ptl__queue_8c_48d8984820cd9ae5f326f33294f90bc1}{
+\index{ptl\_\-queue.c@{ptl\_\-queue.c}!create\_\-element@{create\_\-element}}
+\index{create\_\-element@{create\_\-element}!ptl_queue.c@{ptl\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ptl\_\-q\_\-element\_\-t} create\_\-element (void $\ast$ {\em value})}}
+\label{ptl__queue_8c_48d8984820cd9ae5f326f33294f90bc1}
+
+
+\hypertarget{ptl__queue_8c_696932e0d9bd62768e4c9a935d2ced66}{
+\index{ptl\_\-queue.c@{ptl\_\-queue.c}!create\_\-queue@{create\_\-queue}}
+\index{create\_\-queue@{create\_\-queue}!ptl_queue.c@{ptl\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}{\bf ptl\_\-q\_\-t} create\_\-queue ({\bf ptl\_\-q\_\-funcs\_\-t} {\em q\_\-functions})}}
+\label{ptl__queue_8c_696932e0d9bd62768e4c9a935d2ced66}
+
+
+Creates the queue assigning the function pointers. 
+
+\hypertarget{ptl__queue_8c_7db16d7b347a2eab4b5cb6068df1dbbe}{
+\index{ptl\_\-queue.c@{ptl\_\-queue.c}!destroy\_\-queue@{destroy\_\-queue}}
+\index{destroy\_\-queue@{destroy\_\-queue}!ptl_queue.c@{ptl\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void destroy\_\-queue ({\bf ptl\_\-q\_\-t} {\em q})}}
+\label{ptl__queue_8c_7db16d7b347a2eab4b5cb6068df1dbbe}
+
+
+Clears the queue, including freeing any memory used/create during the \hyperlink{ptl__queue_8c_696932e0d9bd62768e4c9a935d2ced66}{create\_\-queue()} call. 
+
+Calls clear() - which should handle any queue element freeing. 
