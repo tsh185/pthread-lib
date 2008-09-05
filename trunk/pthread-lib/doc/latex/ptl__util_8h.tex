@@ -1,0 +1,113 @@
+\hypertarget{ptl__util_8h}{
+\section{ptl\_\-util.h File Reference}
+\label{ptl__util_8h}\index{ptl\_\-util.h@{ptl\_\-util.h}}
+}
+\subsection*{Defines}
+\begin{CompactItemize}
+\item 
+\#define \hyperlink{ptl__util_8h_25875003b43b81a4302256caa4a13599}{FREE}(x)~\{if(x) \{free(x); x = NULL;\}\}
+\item 
+\#define \hyperlink{ptl__util_8h_f20576fc72015288ac8e8b7da26185ca}{GET\_\-LINE}(file, line, line\_\-size, str, val, delim, delim2, sp, val\_\-ptr, str\_\-ptr)~\{ fgets(line,(line\_\-size),file); str=strtok\_\-r(line,delim,sp); if(!str)\{continue;\} val=strtok\_\-r(NULL, delim2, sp); str\_\-ptr=strip\_\-whitespace(str); val\_\-ptr=strip\_\-whitespace(val); \}
+\item 
+\#define \hyperlink{ptl__util_8h_5c6c6b26e9013b259ee96493df0df220}{STR\_\-CAT}(dest, src, max)~\{ if((strlen(dest)+strlen(src)) $<$ max)\{ strcat(dest,src);\} else \{strncat(dest,src,(max-(strlen(dest)+strlen(src))));\} \}
+\item 
+\#define \hyperlink{ptl__util_8h_242ecce3416ac3597c8b731deecd3178}{COPY}(dest, src, size)~\{ memset(dest,0,size); memcpy(dest,src,size); \}
+\item 
+\#define \hyperlink{ptl__util_8h_9addbab77412d6dc0d7f9375afa5a772}{INT\_\-TO\_\-CHAR}(num, c)~\{ sprintf(c,\char`\"{}\%i\char`\"{}, num);  \}
+\item 
+\#define \hyperlink{ptl__util_8h_584277e2b3df9a5db0e93000b09df811}{TIMEVAL\_\-TO\_\-TIMESPEC}(tv, ts)
+\item 
+\#define \hyperlink{ptl__util_8h_69d91877e58331c82de03709b845293d}{TIMESPEC\_\-TO\_\-TIMEVAL}(tv, ts)
+\end{CompactItemize}
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+int \hyperlink{ptl__util_8h_048fc20c1f5d2db35057c37e0be9c057}{ptl\_\-timed\_\-wait} (long wait\_\-usec)
+\item 
+void \hyperlink{ptl__util_8h_85b215bdd25802929825334123fbdce5}{ptl\_\-get\_\-future\_\-time} (struct timespec $\ast$ts, long usec)
+\end{CompactItemize}
+
+
+\subsection{Define Documentation}
+\hypertarget{ptl__util_8h_242ecce3416ac3597c8b731deecd3178}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!COPY@{COPY}}
+\index{COPY@{COPY}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define COPY(dest, \/  src, \/  size)~\{ memset(dest,0,size); memcpy(dest,src,size); \}}}
+\label{ptl__util_8h_242ecce3416ac3597c8b731deecd3178}
+
+
+\hypertarget{ptl__util_8h_25875003b43b81a4302256caa4a13599}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!FREE@{FREE}}
+\index{FREE@{FREE}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define FREE(x)~\{if(x) \{free(x); x = NULL;\}\}}}
+\label{ptl__util_8h_25875003b43b81a4302256caa4a13599}
+
+
+\hypertarget{ptl__util_8h_f20576fc72015288ac8e8b7da26185ca}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!GET\_\-LINE@{GET\_\-LINE}}
+\index{GET\_\-LINE@{GET\_\-LINE}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define GET\_\-LINE(file, \/  line, \/  line\_\-size, \/  str, \/  val, \/  delim, \/  delim2, \/  sp, \/  val\_\-ptr, \/  str\_\-ptr)~\{ fgets(line,(line\_\-size),file); str=strtok\_\-r(line,delim,sp); if(!str)\{continue;\} val=strtok\_\-r(NULL, delim2, sp); str\_\-ptr=strip\_\-whitespace(str); val\_\-ptr=strip\_\-whitespace(val); \}}}
+\label{ptl__util_8h_f20576fc72015288ac8e8b7da26185ca}
+
+
+\hypertarget{ptl__util_8h_9addbab77412d6dc0d7f9375afa5a772}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!INT\_\-TO\_\-CHAR@{INT\_\-TO\_\-CHAR}}
+\index{INT\_\-TO\_\-CHAR@{INT\_\-TO\_\-CHAR}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define INT\_\-TO\_\-CHAR(num, \/  c)~\{ sprintf(c,\char`\"{}\%i\char`\"{}, num);  \}}}
+\label{ptl__util_8h_9addbab77412d6dc0d7f9375afa5a772}
+
+
+\hypertarget{ptl__util_8h_5c6c6b26e9013b259ee96493df0df220}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!STR\_\-CAT@{STR\_\-CAT}}
+\index{STR\_\-CAT@{STR\_\-CAT}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define STR\_\-CAT(dest, \/  src, \/  max)~\{ if((strlen(dest)+strlen(src)) $<$ max)\{ strcat(dest,src);\} else \{strncat(dest,src,(max-(strlen(dest)+strlen(src))));\} \}}}
+\label{ptl__util_8h_5c6c6b26e9013b259ee96493df0df220}
+
+
+\hypertarget{ptl__util_8h_69d91877e58331c82de03709b845293d}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!TIMESPEC\_\-TO\_\-TIMEVAL@{TIMESPEC\_\-TO\_\-TIMEVAL}}
+\index{TIMESPEC\_\-TO\_\-TIMEVAL@{TIMESPEC\_\-TO\_\-TIMEVAL}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define TIMESPEC\_\-TO\_\-TIMEVAL(tv, \/  ts)}}
+\label{ptl__util_8h_69d91877e58331c82de03709b845293d}
+
+
+\textbf{Value:}
+
+\begin{Code}\begin{verbatim}{                                   \
+        (tv)->tv_sec = (ts)->tv_sec;                                    \
+        (tv)->tv_usec = (ts)->tv_nsec / 1000;                           \
+}
+\end{verbatim}
+\end{Code}
+\hypertarget{ptl__util_8h_584277e2b3df9a5db0e93000b09df811}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!TIMEVAL\_\-TO\_\-TIMESPEC@{TIMEVAL\_\-TO\_\-TIMESPEC}}
+\index{TIMEVAL\_\-TO\_\-TIMESPEC@{TIMEVAL\_\-TO\_\-TIMESPEC}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}\#define TIMEVAL\_\-TO\_\-TIMESPEC(tv, \/  ts)}}
+\label{ptl__util_8h_584277e2b3df9a5db0e93000b09df811}
+
+
+\textbf{Value:}
+
+\begin{Code}\begin{verbatim}{                                   \
+        (ts)->tv_sec = (tv)->tv_sec;                                    \
+        (ts)->tv_nsec = (tv)->tv_usec * 1000;                           \
+}
+\end{verbatim}
+\end{Code}
+
+
+\subsection{Function Documentation}
+\hypertarget{ptl__util_8h_85b215bdd25802929825334123fbdce5}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!ptl\_\-get\_\-future\_\-time@{ptl\_\-get\_\-future\_\-time}}
+\index{ptl\_\-get\_\-future\_\-time@{ptl\_\-get\_\-future\_\-time}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void ptl\_\-get\_\-future\_\-time (struct timespec $\ast$ {\em ts}, \/  long {\em usec})}}
+\label{ptl__util_8h_85b215bdd25802929825334123fbdce5}
+
+
+\hypertarget{ptl__util_8h_048fc20c1f5d2db35057c37e0be9c057}{
+\index{ptl\_\-util.h@{ptl\_\-util.h}!ptl\_\-timed\_\-wait@{ptl\_\-timed\_\-wait}}
+\index{ptl\_\-timed\_\-wait@{ptl\_\-timed\_\-wait}!ptl_util.h@{ptl\_\-util.h}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int ptl\_\-timed\_\-wait (long {\em wait\_\-usec})}}
+\label{ptl__util_8h_048fc20c1f5d2db35057c37e0be9c057}
+
+

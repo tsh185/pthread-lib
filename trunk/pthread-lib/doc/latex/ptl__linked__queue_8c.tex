@@ -1,0 +1,142 @@
+\hypertarget{ptl__linked__queue_8c}{
+\section{ptl\_\-linked\_\-queue.c File Reference}
+\label{ptl__linked__queue_8c}\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}}
+}
+{\tt \#include $<$pthread.h$>$}\par
+{\tt \#include $<$stdlib.h$>$}\par
+{\tt \#include $<$stdio.h$>$}\par
+{\tt \#include $<$assert.h$>$}\par
+{\tt \#include $<$time.h$>$}\par
+{\tt \#include $<$sys/time.h$>$}\par
+{\tt \#include \char`\"{}ptl\_\-queue.h\char`\"{}}\par
+{\tt \#include \char`\"{}ptl\_\-linked\_\-queue.h\char`\"{}}\par
+{\tt \#include \char`\"{}ptl\_\-util.h\char`\"{}}\par
+\subsection*{Functions}
+\begin{CompactItemize}
+\item 
+void \hyperlink{ptl__linked__queue_8c_a62141495e57a2ab98b335379781d26e}{ptl\_\-lq\_\-init\_\-queue} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q)
+\begin{CompactList}\small\item\em Initializes the queue, creating all memory needed to support this data structure. \item\end{CompactList}\item 
+void \hyperlink{ptl__linked__queue_8c_5d73deab1f436b611ee6bf6ca5df1fad}{ptl\_\-lq\_\-destroy\_\-queue} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q)
+\begin{CompactList}\small\item\em This linked queue implementation is a simple FIFO queue with locking/blocking operations for all get and put operations. \item\end{CompactList}\item 
+int \hyperlink{ptl__linked__queue_8c_96a22931a967690ed655174d8ac908f4}{ptl\_\-lq\_\-add} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q, void $\ast$value)
+\begin{CompactList}\small\item\em Inserts the specified element into this queue if it is possible to do so immediately without violating capacity restrictions, returning true upon success and false if no space is currently available. \item\end{CompactList}\item 
+int \hyperlink{ptl__linked__queue_8c_c67126ed8e6fc6c7aba60f8a232958db}{ptl\_\-lq\_\-add\_\-wait} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q, void $\ast$value, long timeout)
+\begin{CompactList}\small\item\em iserts the specified element at the tail of this queue, waiting if necessary up to the specified wait time for space to become available. \item\end{CompactList}\item 
+void \hyperlink{ptl__linked__queue_8c_6eb3e3d6461076426622742706bcd7a0}{ptl\_\-lq\_\-clear} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q)
+\begin{CompactList}\small\item\em Removes all of the elements from this queue. \item\end{CompactList}\item 
+void $\ast$ \hyperlink{ptl__linked__queue_8c_18b5cb9b029bda48d1693f931d545d8b}{ptl\_\-lq\_\-peek} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q)
+\begin{CompactList}\small\item\em Retrieves, but does not remove, the head of this queue. \item\end{CompactList}\item 
+void $\ast$ \hyperlink{ptl__linked__queue_8c_f0e438bed782a79fc9a85d95fd36c451}{ptl\_\-lq\_\-get} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q)
+\begin{CompactList}\small\item\em Retrieves and removes the head of this queue. \item\end{CompactList}\item 
+int \hyperlink{ptl__linked__queue_8c_77c2af7ac715ced5d88092c212c5e058}{ptl\_\-lq\_\-get\_\-wait} (\hyperlink{structptl__q}{ptl\_\-q\_\-t} q, void $\ast$value, long timeout)
+\begin{CompactList}\small\item\em Retrieves and removes the head of this queue, waiting up to the specified wait time if necessary for an element to become available. \item\end{CompactList}\end{CompactItemize}
+\subsection*{Variables}
+\begin{CompactItemize}
+\item 
+pthread\_\-mutex\_\-t \hyperlink{ptl__linked__queue_8c_db1af097d280e85e6a3c69ca65ff5669}{ptl\_\-lq\_\-mutex} = PTHREAD\_\-MUTEX\_\-INITIALIZER
+\end{CompactItemize}
+
+
+\subsection{Function Documentation}
+\hypertarget{ptl__linked__queue_8c_96a22931a967690ed655174d8ac908f4}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-add@{ptl\_\-lq\_\-add}}
+\index{ptl\_\-lq\_\-add@{ptl\_\-lq\_\-add}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int ptl\_\-lq\_\-add ({\bf ptl\_\-q\_\-t} {\em q}, \/  void $\ast$ {\em value})}}
+\label{ptl__linked__queue_8c_96a22931a967690ed655174d8ac908f4}
+
+
+Inserts the specified element into this queue if it is possible to do so immediately without violating capacity restrictions, returning true upon success and false if no space is currently available. 
+
+Inserts the specified element into this queue. \hypertarget{ptl__linked__queue_8c_c67126ed8e6fc6c7aba60f8a232958db}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-add\_\-wait@{ptl\_\-lq\_\-add\_\-wait}}
+\index{ptl\_\-lq\_\-add\_\-wait@{ptl\_\-lq\_\-add\_\-wait}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int ptl\_\-lq\_\-add\_\-wait ({\bf ptl\_\-q\_\-t} {\em q}, \/  void $\ast$ {\em value}, \/  long {\em timeout})}}
+\label{ptl__linked__queue_8c_c67126ed8e6fc6c7aba60f8a232958db}
+
+
+iserts the specified element at the tail of this queue, waiting if necessary up to the specified wait time for space to become available. 
+
+placeholder \hypertarget{ptl__linked__queue_8c_6eb3e3d6461076426622742706bcd7a0}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-clear@{ptl\_\-lq\_\-clear}}
+\index{ptl\_\-lq\_\-clear@{ptl\_\-lq\_\-clear}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void ptl\_\-lq\_\-clear ({\bf ptl\_\-q\_\-t} {\em q})}}
+\label{ptl__linked__queue_8c_6eb3e3d6461076426622742706bcd7a0}
+
+
+Removes all of the elements from this queue. 
+
+placeholder \hypertarget{ptl__linked__queue_8c_5d73deab1f436b611ee6bf6ca5df1fad}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-destroy\_\-queue@{ptl\_\-lq\_\-destroy\_\-queue}}
+\index{ptl\_\-lq\_\-destroy\_\-queue@{ptl\_\-lq\_\-destroy\_\-queue}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void ptl\_\-lq\_\-destroy\_\-queue ({\bf ptl\_\-q\_\-t} {\em q})}}
+\label{ptl__linked__queue_8c_5d73deab1f436b611ee6bf6ca5df1fad}
+
+
+This linked queue implementation is a simple FIFO queue with locking/blocking operations for all get and put operations. 
+
+A single lock is used to control both get and put. Like all linked list implementations, capacity is not a concern. Destroys the queue and frees the memory. This should be used when the queue is no longer going to be used.
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em q}]the queue to destroy \end{description}
+\end{Desc}
+\hypertarget{ptl__linked__queue_8c_f0e438bed782a79fc9a85d95fd36c451}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-get@{ptl\_\-lq\_\-get}}
+\index{ptl\_\-lq\_\-get@{ptl\_\-lq\_\-get}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ ptl\_\-lq\_\-get ({\bf ptl\_\-q\_\-t} {\em q})}}
+\label{ptl__linked__queue_8c_f0e438bed782a79fc9a85d95fd36c451}
+
+
+Retrieves and removes the head of this queue. 
+
+placeholder
+
+It will block until an element is available. This function will block once it enters the function mutex. \hypertarget{ptl__linked__queue_8c_77c2af7ac715ced5d88092c212c5e058}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-get\_\-wait@{ptl\_\-lq\_\-get\_\-wait}}
+\index{ptl\_\-lq\_\-get\_\-wait@{ptl\_\-lq\_\-get\_\-wait}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}int ptl\_\-lq\_\-get\_\-wait ({\bf ptl\_\-q\_\-t} {\em q}, \/  void $\ast$ {\em value}, \/  long {\em timeout})}}
+\label{ptl__linked__queue_8c_77c2af7ac715ced5d88092c212c5e058}
+
+
+Retrieves and removes the head of this queue, waiting up to the specified wait time if necessary for an element to become available. 
+
+placeholder
+
+This function will block once it enters the function mutex. Returns 1 if item was attemtped to be retrieved, 0 if not. If item was retrieved, it will be populated in 'value'. If not, then 'value' will be assigned NULL.
+
+It may be a bad idea to try to get the lock constantly... timeout - time in seconds \hypertarget{ptl__linked__queue_8c_a62141495e57a2ab98b335379781d26e}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-init\_\-queue@{ptl\_\-lq\_\-init\_\-queue}}
+\index{ptl\_\-lq\_\-init\_\-queue@{ptl\_\-lq\_\-init\_\-queue}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void ptl\_\-lq\_\-init\_\-queue ({\bf ptl\_\-q\_\-t} {\em q})}}
+\label{ptl__linked__queue_8c_a62141495e57a2ab98b335379781d26e}
+
+
+Initializes the queue, creating all memory needed to support this data structure. 
+
+\begin{Desc}
+\item[Parameters:]
+\begin{description}
+\item[{\em q}]queue to be initized. \end{description}
+\end{Desc}
+\hypertarget{ptl__linked__queue_8c_18b5cb9b029bda48d1693f931d545d8b}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-peek@{ptl\_\-lq\_\-peek}}
+\index{ptl\_\-lq\_\-peek@{ptl\_\-lq\_\-peek}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}void$\ast$ ptl\_\-lq\_\-peek ({\bf ptl\_\-q\_\-t} {\em q})}}
+\label{ptl__linked__queue_8c_18b5cb9b029bda48d1693f931d545d8b}
+
+
+Retrieves, but does not remove, the head of this queue. 
+
+placeholder
+
+This function is read-only and therefore does not block. 
+
+\subsection{Variable Documentation}
+\hypertarget{ptl__linked__queue_8c_db1af097d280e85e6a3c69ca65ff5669}{
+\index{ptl\_\-linked\_\-queue.c@{ptl\_\-linked\_\-queue.c}!ptl\_\-lq\_\-mutex@{ptl\_\-lq\_\-mutex}}
+\index{ptl\_\-lq\_\-mutex@{ptl\_\-lq\_\-mutex}!ptl_linked_queue.c@{ptl\_\-linked\_\-queue.c}}
+\subsubsection{\setlength{\rightskip}{0pt plus 5cm}pthread\_\-mutex\_\-t {\bf ptl\_\-lq\_\-mutex} = PTHREAD\_\-MUTEX\_\-INITIALIZER}}
+\label{ptl__linked__queue_8c_db1af097d280e85e6a3c69ca65ff5669}
+
+
