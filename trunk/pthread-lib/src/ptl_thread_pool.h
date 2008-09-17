@@ -14,4 +14,37 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
  
- 
+#ifndef __PTL_THREAD_POOL_H__
+#define __PTL_THREAD_POOL_H__
+
+/* Structures */
+struct ptl_thread_pool {
+	int core_pool_size;			/**< core size of the pool this manager is managing*/
+	int max_pool_size;			/**< max size of the pool this manager is managing*/ 
+	int current_pool_size;		/**< current pool size (between core and max) */
+	long keep_alive_time;		/**< keep alive time of each thread in the pool */
+	pthread_t *threads;			/**< actual threads */
+	long completed_tasks;		/**< number of tasks this thread completed */
+};
+
+
+
+/* Type Definitions */
+typedef struct ptl_thread_pool *ptl_thread_pool_t;
+
+/* Methods */
+
+/**
+ * Creates the thread pool that a manager can manage.
+ * When create_thread_manager is called, a thread pool is created.
+ */
+ptl_thread_pool_t ptl_create_thread_pool(int core_pool_size,
+										 int max_pool_size,
+										 long keep_alive_time);
+
+/**
+ * Creates the memory for the core_pool_size of threads (pthread_t).
+ */
+void start_core_threads(ptl_thread_pool_t thread_pool);
+
+#endif

@@ -17,6 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
  
+
+/**
+ * This "class" is an implementation of an ArrayList (see Javadoc). It is an
+ * array of pointers that can point to any memory. It starts with an inital
+ * 'size' and grows (and may shrink) as more elements are put in the list.
+ */
+
+
 #ifndef __PTL_ARRAY_LIST_H__
 #define __PTL_ARRAY_LIST_H__
 
@@ -24,25 +32,113 @@ struct ptl_array_list {
 	int capacity; 		/**< largest current size */
 	int size;	  		/**< current size */
 	int malloc_size; 	/**< size used in the malloc */
-	void *array;  		/**< elements in the array */
+	void **array;  		/**< array of pointers - elements in the array */
 };
 
 typedef struct ptl_array_list ptl_array_list_t;
 
-
+/**
+ * 
+ *
+ * @param
+ * @return
+ */
 int ptl_al_create_array_list(ptl_array_list_t *array_list);
-int ptl_al_create_array_list_size(ptl_array_list_t *array_list, int size);
-int ptl_al_destroy_array_list(ptl_array_list_t *array_list);
-int ptl_al_is_empty(ptl_array_list_t *array_list);
-int ptl_al_add(ptl_array_list_t *array_list, void *value);
-int ptl_al_add_index(ptl_array_list_t *array_list, void *value, int index);
-void *ptl_al_get(ptl_array_list_t *array_list, int index);
-int ptl_al_set(ptl_array_list_t *array_list, void *value, int index);
-void *ptl_al_remove_index(ptl_array_list_t *array_list, int index);
-void *ptl_al_remove(ptl_array_list_t *array_list, void* value);
-void ptl_al_clear(ptl_array_list_t *array_list);
-int ptl_al_contains(ptl_array_list_t *array_list, void* value);
-int ptl_al_index_of(ptl_array_list_t *array_list, void* value);
 
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_create_array_list_size(ptl_array_list_t *array_list, int size);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_destroy_array_list(ptl_array_list_t *array_list);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_is_empty(ptl_array_list_t *array_list);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_add(ptl_array_list_t *array_list, void *value);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_add_index(ptl_array_list_t *array_list, void *value, int index);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+void *ptl_al_get(ptl_array_list_t *array_list, int index);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_set(ptl_array_list_t *array_list, void *value, int index);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+void *ptl_al_remove_index(ptl_array_list_t *array_list, int index);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+void *ptl_al_remove(ptl_array_list_t *array_list, void* value);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+void ptl_al_clear(ptl_array_list_t *array_list);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_contains(ptl_array_list_t *array_list, void* value);
+
+/**
+ *
+ *
+ * @param
+ * @return
+ */
+int ptl_al_index_of(ptl_array_list_t *array_list, void* value);
 
 #endif

@@ -16,7 +16,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
- 
+
+
+/*
+ * For a "class" description, see the header file.
+ */
+
+
 #include <pthread.h>
 #include <stdio.h>
 #include <assert.h>
@@ -24,6 +30,7 @@
 #include <assert.h>
 #include <string.h>
 #include "ptl_array_list.h"
+#include "ptl_queue.h"
 #include "ptl_util.h"
 
 /* Private Functions */
@@ -41,8 +48,8 @@ int ptl_al_create_array_list_size(ptl_array_list_t *array_list, int size){
 	if(array_list == NULL || size <= 0) { return 0; }
 	
 	// initialize 
-	array_list->capacity = size;
-	array_list->size = 0;
+	array_list->capacity = size; // parameter 'size' is 'capacity' in this struct
+	array_list->size = 0; // this is the current size of the array (not the parameter above)
 	array_list->array = NULL;
 	
 	int malloc_size = size * (sizeof(void *)); // size of ptr * capacity (size)
@@ -61,6 +68,8 @@ int ptl_al_destroy_array_list(ptl_array_list_t *array_list){
 	array_list->capacity = 0;
 	array_list->size = 0;
 	array_list->malloc_size = 0;
+	// if any of the pointers in this array are pointing of any allocated 
+	// memory, then that pointer is lost...
 	FREE(array_list->array);
 	
 	return 1;
@@ -77,15 +86,16 @@ int ptl_al_is_empty(ptl_array_list_t *array_list){
 int ptl_al_add(ptl_array_list_t *array_list, void *value){
 	if(array_list == NULL || value == NULL) { return 0; }
 	
+	// if we have room, then continue, otherwise this funciton will create room
 	_check_capacity(array_list, 0);
-	// array_list->array[array_list->size] = value;
-	//((array_list->array) + (array_list->size)) = value; // this ptr points to the ptr given
 	
-	void *ptr = array_list->array; // use temp variable
-	ptr += array_list->size; // move to our desired position
-	ptr = value; // assign the value
+	// put the value in the list
+	void **ptr = array_list->array;
+	ptr += array_list->size; // move to our desired position (end of the list in this case)
+	*ptr = value; // we need to get to the ptr in the list, then assign our ptr there
 	
-	array_list->size++; // increase the size
+	array_list->size++; // increase our size
+	
 	
 	return 1;
 }
@@ -101,27 +111,12 @@ int ptl_al_add_index(ptl_array_list_t *array_list, void *value, int index){
 	
 	_check_capacity(array_list, 1);
 	
-	// copy all elements to the right
+	// copy all elements to the right i.e. make some space (and we all rolled over...)
 	_shift_elements(array_list, index, 1);
 	
-	// use a temporary array to shift
-	//void *temp_array = (void *)calloc(array_list->malloc_size);
-	//assert(temp_array);
 	
-	//int copy_size = (sizeof(void *))+(index-(array_list->size));
-	// copy index to end of array ('index' ... N)
-	//memcpy(temp_array, (array_list->array)+index, copy_size);
-	// copy from temp back to original array ('index'+1 ... N)
-	//memcpy((array_list->array)+index+1, temp_array, copy_size);
-	
-	// insert the element
-	//(array_list->array)+index = value;
-	array_list->array[index] = value;
-	
-	// free out temporary memory
-	FREE(temp_array);
-	
-	return 1;
+	// reuse existing function
+	return ptl_al_set(array_list, value, index);
 }
 
 
@@ -133,8 +128,8 @@ void *ptl_al_get(ptl_array_list_t *array_list, int index){
 		   return 0; 
 	   }
 	
-	return array_list->array[index];
 	
+	return *((array_list->array) + index);
 }
 
 
@@ -146,7 +141,10 @@ int ptl_al_set(ptl_array_list_t *array_list, void *value, int index){
 		   return 0; 
    }
 	
-	array_list->array[index] = value;
+	void **ptr = array_list->array;
+	ptr += index; // move to our desired position ('index' in this case)
+	*ptr = value; // we need to get to the ptr in the list, then assign our ptr there
+	
 	
 	return 1;
 }
@@ -160,12 +158,14 @@ void *ptl_al_remove_index(ptl_array_list_t *array_list, int index){
 		   return NULL; 
    }
 	
-	void *element = array_list->array[index];
-	// element = (array_list->array)+index;
-	array_list->array[index] = NULL;
+	void **ptr = ((array_list->array) + index); // ptr to ptr in array
+	void *element = *ptr; // ptr to element in array
+	
+	*ptr = NULL; // make ptr in array null
 	
 	// shift elements to the left by 1
 	_shift_elements(array_list, index, -1);
+	
 	
 	return element;
 }
@@ -178,25 +178,35 @@ void *ptl_al_remove(ptl_array_list_t *array_list, void* value){
 	}
 	
 	void* element = NULL;
+	
 	// search for the element to remove
-	int i = 0;
-	for(i=0; i<array_list->size; i++){
-		if(array_list->array[i] == value){
-			break;
-		}
-	}
+	int index = ptl_al_index_of(array_list, value);
 	
 	// did we find the value?
-	if(i < array_list->size){ // found the element
-		element = ptl_al_remove_index(array_list, i); // call existing function
+	if(index >= 0){
+		element = ptl_al_remove_index(array_list, index); // call existing function
 	}
 	
-	return element;
+	//~ int i = 0;
+	//~ for(i=0; i<array_list->size; i++){
+		//~ i_ptr = ptr + i; // get to element 'i'
+		
+		//~ // does this ptr's address match the ptr's address passed in?
+		//~ if(*i_ptr == value){ 
+			//~ break;
+	//~ }
 	
+	//~ // did we find the value?
+	//~ if(i < array_list->size){ // found the element
+		//~ element = ptl_al_remove_index(array_list, i); // call existing function
+	//~ }
+		
+	
+	return element;
 }
 
 
-/* sets all ptrs to null (does not free any memory */
+/* sets all ptrs to null (does not free any memory) */
 void ptl_al_clear(ptl_array_list_t *array_list){
 	if(array_list == NULL) { return; }
 	
@@ -207,51 +217,50 @@ void ptl_al_clear(ptl_array_list_t *array_list){
 
 /* go through array, return true if the element is in the array */
 int ptl_al_contains(ptl_array_list_t *array_list, void* value){
-	if(array_list == NULL || value == NULL) {
-		   return NULL; 
-   }
 	
-	int i = 0;
-	for(i=0; i<array_list->size; i++){
-		if(array_list->array[i] == value){
-			return 1;
-		}
-	}
-	
-	return 0;
+	return (ptl_al_index_of(array_list, value) >= 0);
 }
 
 
 /* go through array, return the index of the element if the element is in the array */
 int ptl_al_index_of(ptl_array_list_t *array_list, void* value){
-		if(array_list == NULL || 
-	   index < 0 || 
-	   index >= array_list->size) {
-		   return NULL; 
-   }
+	if(array_list == NULL || value == NULL) {
+		return 0; 
+    }
 	
+	void **ptr = array_list->array;
+	void **i_ptr = NULL;
+	
+	// search for the element to remove
 	int i = 0;
 	for(i=0; i<array_list->size; i++){
-		if(array_list->array[i] == value){
-			return i;
+		i_ptr = ptr + i; // get to element 'i'
+		
+		// does this ptr's address match the ptr's address passed in?
+		if(*i_ptr == value){
+			return i; // return 'index' if found
 		}
 	}
 	
+		
+	// otherwise, return -1
 	return -1;
 }
 
 
 /* check if array needs to be expanded, if so, it expands it */
 void _check_capacity(ptl_array_list_t *array_list, int size){
-	// don't check array_list, assume it's not null
-	if( (array_list->size + size) >= array_list->capacity){ // make the array list bigger
+	assert(array_list);
+	assert(size > 0);
+	
+	if( (array_list->size + size) >= array_list->capacity ){ // make the array list bigger
 		
 		// calculate new capacity
 		int new_capacity = (array_list->capacity * 3)/2 + 1;
 		
 		// allocate new memory
 		int malloc_size = new_capacity * (sizeof(void *)); 
-		void *new_array = (void *)calloc(malloc_size);
+		void **new_array = (void *)calloc(new_capacity, sizeof(void*));
 		assert(new_array);
 		
 		// copy elements to the new array using the 'real' size
@@ -266,15 +275,18 @@ void _check_capacity(ptl_array_list_t *array_list, int size){
 		
 		// free old memory
 		FREE(old_array);
-		
 	}
 }
 
 
 /* shifts the elements of the array left or right */
 void _shift_elements(ptl_array_list_t *array_list, int index, int num_places){
+	assert(array_list);
+	assert(index >= 0);
+	assert(num_places != 0);
+	
 	// use a temporary array to shift
-	void *temp_array = (void *)calloc(array_list->malloc_size);
+	void **temp_array = (void *)calloc(array_list->capacity, sizeof(void *));
 	assert(temp_array);
 	
 	int copy_size = 0;
@@ -299,6 +311,6 @@ void _shift_elements(ptl_array_list_t *array_list, int index, int num_places){
 	// copy from temp back to original array
 	memcpy((array_list->array)+index+num_places, temp_array, copy_size);
 	
-	// free out temporary memory
+	// free temporary memory
 	FREE(temp_array);
 }

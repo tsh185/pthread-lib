@@ -49,7 +49,8 @@ am_pthread_lib_OBJECTS = main.$(OBJEXT) ptl_linked_queue.$(OBJEXT) \
 	ptl_queue.$(OBJEXT) ptl_linked_queue_test.$(OBJEXT) \
 	ptl_util.$(OBJEXT) ptl_signal_manager.$(OBJEXT) \
 	ptl_thread_manager.$(OBJEXT) ptl_thread_pool.$(OBJEXT) \
-	ptl_array_list.$(OBJEXT)
+	ptl_array_list.$(OBJEXT) ptl_task.$(OBJEXT) test.$(OBJEXT) \
+	ptl_array_queue.$(OBJEXT)
 pthread_lib_OBJECTS = $(am_pthread_lib_OBJECTS)
 pthread_lib_DEPENDENCIES =
 DEFAULT_INCLUDES = -I. -I$(top_builddir)
@@ -256,7 +257,13 @@ pthread_lib_SOURCES = \
 	ptl_thread_pool.h       \
 	ptl_thread_pool.c       \
 	ptl_array_list.c       \
-	ptl_array_list.h
+	ptl_array_list.h       \
+	ptl_task.c       \
+	ptl_task.h       \
+	test.h       \
+	test.c       \
+	ptl_array_queue.c       \
+	ptl_array_queue.h
 
 pthread_lib_LDADD = \
 	-lpthread
@@ -337,13 +344,16 @@ distclean-compile:
 
 include ./$(DEPDIR)/main.Po
 include ./$(DEPDIR)/ptl_array_list.Po
+include ./$(DEPDIR)/ptl_array_queue.Po
 include ./$(DEPDIR)/ptl_linked_queue.Po
 include ./$(DEPDIR)/ptl_linked_queue_test.Po
 include ./$(DEPDIR)/ptl_queue.Po
 include ./$(DEPDIR)/ptl_signal_manager.Po
+include ./$(DEPDIR)/ptl_task.Po
 include ./$(DEPDIR)/ptl_thread_manager.Po
 include ./$(DEPDIR)/ptl_thread_pool.Po
 include ./$(DEPDIR)/ptl_util.Po
+include ./$(DEPDIR)/test.Po
 
 .c.o:
 	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
