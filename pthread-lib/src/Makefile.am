@@ -30,7 +30,13 @@ pthread_lib_SOURCES = \
 	ptl_thread_pool.h       \
 	ptl_thread_pool.c       \
 	ptl_array_list.c       \
-	ptl_array_list.h
+	ptl_array_list.h       \
+	ptl_task.c       \
+	ptl_task.h       \
+	test.h       \
+	test.c       \
+	ptl_array_queue.c       \
+	ptl_array_queue.h
 
 pthread_lib_LDADD = \
 	-lpthread

@@ -17,39 +17,96 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
-public ThreadPoolExecutor(int corePoolSize,
-                              int maximumPoolSize,
-                              long keepAliveTime,
-                              TimeUnit unit,
-                              BlockingQueue<Runnable> workQueue,
-                              ThreadFactory threadFactory,
-                              RejectedExecutionHandler handler);
-								  
-void create_thread_manager(int core_pool_size, 
+#include <pthread.h>
+#include <stdio.h>
+#include <assert.h>
+#include <malloc.h>
+#include <assert.h>
+#include <string.h>
+#include "ptl_thread_manager.h"
+#include "ptl_util.h"
+
+
+/* Private Functions */
+void add_thread();
+void ensure_queued_task_handled();
+void reject();
+void run_task(void* task);
+void get_next_task();
+void interrupt_idle_threads();
+void drain_queue();
+
+/* Function Bodies */
+ptl_thread_manger_t create_thread_manager(int core_pool_size, 
 						   int max_pool_size, 
 						   long keep_alive_time,
 						   ptl_q_t work_q,
-						   rejected_handler_t rejected_handler);
-    
-
-    pthread_t *thread = (pthread_t *)malloc(sizeof(pthread_t));
-
-    /* assign pool to manage */
-    pool_to_manage = thread_pool;
-
-    /* create our manager thread */
-    rc = pthread_create(thread, NULL, begin_managing, (void *)arg);
-
-    /* save our thread handle */
-    global_manager_thread = thread;
-
-    /* set our running flag */
-    thread_manager_running = TRUE;
-
-    /* create mutexes */
-    status = pthread_mutex_init(&thread_pool_mutex, NULL);
-    CHECK_STATUS(status, "pthread_mutex_init", "thread_pool_mutex bad status");
+						   void (*rejected_handler)(void *)){
+							   
+	ptl_thread_manger_t manager = (ptl_thread_manger_t)malloc(sizeof(struct ptl_thread_manager));
+	assert(manager);
+	
+	/* create the thread pool */
+	ptl_thread_pool_t thread_pool = 
+		ptl_create_thread_pool(core_pool_size, max_pool_size, keep_alive_time);
+							   
+							   
+	/* initilize the manager struct */
+	manager->work_q = work_q;
+	manager->thread+pool = thread_pool;
+	manager->
+	manager->
+	manager->					   
+	manager->main_mutex = PTHREAD_MUTEX_INITIALIZER;
+	manager->termination_mutex = PTHREAD_COND_INITIALIZER;
+							   
 }
 
+ptl_thread_manger_t 
+	create_thread_manager_with_pool(ptl_thread_pool_t thread_pool
+						   			ptl_q_t work_q,
+						   			void* rejected_handler){
+//TODO:
+	return NULL;
+										   
+}
+    /*
+ struct ptl_thread_manager {
+	ptl_q_t work_q;						
+	void* rejected_handler;				
+	int run_state;						
+	pthread_mutex_t main_mutex; 		
+	 							     		 
+	pthread_cond_t termination_mutex;	
+	struct ptl_thread_pool;
+	void (*before_execute)(void *);	  	
+	void (*after_execute)(void *)
+};*/
+
+   // pthread_t *thread = (pthread_t *)malloc(sizeof(pthread_t));
+
+    /* assign pool to manage */
+    //pool_to_manage = thread_pool;
+
+    /* create our manager thread */
+    //rc = pthread_create(thread, NULL, begin_managing, (void *)arg);
+
+    /* save our thread handle */
+    //global_manager_thread = thread;
+
+    /* set our running flag */
+    //thread_manager_running = TRUE;
+
+    /* create mutexes */
+    //status = pthread_mutex_init(&thread_pool_mutex, NULL);
+    //CHECK_STATUS(status, "pthread_mutex_init", "thread_pool_mutex bad status");
+
+void add_thread(){return;}
+void ensure_queued_task_handled(){return;}
+void reject(){return;}
+void run_task(void* task){return;}
+void get_next_task(){return;}
+void interrupt_idle_threads(){return;}
+void drain_queue(){return;}
  
  

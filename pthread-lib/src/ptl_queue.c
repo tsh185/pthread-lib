@@ -73,6 +73,7 @@ void ptl_q_destroy_queue(ptl_q_t q){
 	return;
 }
 
+// TODO: create add, add(index), remove, remove(index) functions
 
 /*
  * Checks to ensure all the function pointers are set.

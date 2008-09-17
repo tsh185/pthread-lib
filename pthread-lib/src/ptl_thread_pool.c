@@ -14,4 +14,48 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
  
- 
+#include <pthread.h>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <sys/time.h>
+#include "ptl_thread_pool.h"
+
+
+/* creates the thread pool */
+ptl_thread_pool_t ptl_create_thread_pool(int core_pool_size,
+										 int max_pool_size,
+										 long keep_alive_time){
+
+	ptl_thread_pool_t thread_pool = (ptl_thread_pool_t)malloc(sizeof(struct ptl_thread_pool));
+	assert(thread_pool);
+											 
+	thread_pool->core_pool_size = core_pool_size;
+	thread_pool->max_pool_size = max_pool_size;
+	thread_pool->keep_alive_time = keep_alive_time;
+											 
+	thread_pool->current_pool_size = 0;
+	thread_pool->threads = NULL;
+	thread_pool->completed_tasks = 0;
+											 
+	/* create memory enough for max_pool_threads */
+	thread_pool->threads = (pthread_t *)malloc(sizeof(pthread_t * max_pool_size));
+}
+
+
+/* creates and starts the core threads */
+void start_core_threads(ptl_thread_pool_t thread_pool){
+	if(thread_pool == NULL){ return;}
+	
+	pthread_t *thread = NULL;
+	
+	int i=0;
+	for(i=0; i < thread_pool->core_pool_size; i++){
+		thread = (pthread_t *)malloc(sizeof(pthread_t));
+		assert(thread);
+		
+		thread_pool->threads[i] = thread;
+	}
+}
+											 
+										

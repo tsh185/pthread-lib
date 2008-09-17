@@ -35,15 +35,7 @@ int signal_manager_running = 0;
 void *_signal_handler_function(void *functions);
 
 
-/**
- * Creates a single thread to handle all interrupt signals.
- * The function pointer that correlated with each signal will be executed
- * when that signal is encountered.  If a ptr is null, nothing happens.
- *
- * @param sig_mgr a non-null pthread_t that will be populated in this function
- * @param func_ptrs set of functions to be executed for various signals
- * @return 1 if create was successful, 0 otherwise
- */
+/* Creates a single thread to handle all interrupt signals */
 int ptl_signal_handler_create(pthread_t sig_mgr, ptl_sh_funcs_t func_ptrs){
   if(func_ptrs == NULL){ return 0; }
 
@@ -54,16 +46,7 @@ int ptl_signal_handler_create(pthread_t sig_mgr, ptl_sh_funcs_t func_ptrs){
 }
 
 
-/**
- * Stops the thread manager by setting a flag and sending a signal.
- * This function must send a signal to the manager to break it out of
- * sigwait. The signal is not assignable in the set of function pointers to
- * avoid undesired behavior.
- * @note A better way to design it would be to make the signal handler stop
- *       when the program stops and use destroy_signal_handler only.
- *
- * @param sig_mgr the created signal manager
- */
+/* Stops the thread manager by setting a flag and sending a signal. */
 void stop_signal_manager(pthread_t sig_mgr){
 
  /* set flag to stop */
@@ -77,12 +60,7 @@ void stop_signal_manager(pthread_t sig_mgr){
 }
 
 
-/**
- * Synchronizes the signal handler and frees the memory.
- * Do not use this function after calling stop_signal_handler.
- *
- * @param sig_mgr the created signal manager
- */
+/* Synchronizes the signal handler and frees the memory. */
 int destroy_signal_manager(pthread_t sig_mgr){
   void *ret_value = 0;
 
@@ -150,13 +128,7 @@ void *_signal_handler_function(void *functions){
 }
 
 
-/**
- * Blocks all signal for the thread calling this function.
- * This function must be called per thread for all threads to block all
- * signals.
- *
- * @return 1 if successful, 0 otherwise
- */
+/* Blocks all signal for the thread calling this function */
 int block_all_signals(){
 
  sigset_t signals;
