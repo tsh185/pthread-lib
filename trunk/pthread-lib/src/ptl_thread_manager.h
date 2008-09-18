@@ -25,10 +25,10 @@
 #include "ptl_task.h"
 
 
-#define RUNNING = 0;
-#define SHUTDOWN = 1;
-#define STOP = 2;
-#define TERMINATED = 3;
+#define RUNNING    0;
+#define SHUTDOWN   1;
+#define STOP       2;
+#define TERMINATED 3;
 
 /* Structures */
 
@@ -49,7 +49,7 @@ struct ptl_thread_manager {
 /* Type Definitions */
 typedef struct ptl_rejected_handler *ptl_rejected_handler_t;
 typedef struct ptl_thread_manager_state *ptl_thread_manager_state_t;
-typedef struct ptl_thread_manger *ptl_thread_manger_t;
+typedef struct ptl_thread_manager *ptl_thread_manager_t;
 
 
 /* Methods */
@@ -60,7 +60,7 @@ typedef struct ptl_thread_manger *ptl_thread_manger_t;
  * After this function is execute, the manager is ready to accept tasks.
  * 
  */
-ptl_thread_manger_t create_thread_manager(int core_pool_size, 
+ptl_thread_manager_t creatptl_thread_manager_te_thread_manager(int core_pool_size, 
 						   				  int max_pool_size, 
 						   				  long keep_alive_time,
 						   				  ptl_q_t work_q,
@@ -70,7 +70,7 @@ ptl_thread_manger_t create_thread_manager(int core_pool_size,
  * This will create the pool of threads and put it in the RUNNING state.
  * After this function is execute, the manager is ready to accept tasks.
  */
-ptl_thread_manger_t 
+ptl_thread_manager_t 
 	create_thread_manager_with_pool(ptl_thread_pool_t thread_pool,
 						   			ptl_q_t work_q,
 						   			void* rejected_handler);
@@ -81,7 +81,7 @@ ptl_thread_manger_t
  *
  * @return 1 if successful, 0 otherwise
  */
-int submit(ptl_thread_manger_t manager, void* function_to_execute);
+int submit(ptl_thread_manager_t manager, void* function_to_execute);
 
 /**
  * Submits the task (ptl_task_t) to the queue that is being watched by the
@@ -89,7 +89,7 @@ int submit(ptl_thread_manger_t manager, void* function_to_execute);
  *
  * @return 1 if successful, 0 otherwise
  */
-int submit_task(ptl_thread_manger_t manager, ptl_task_t task);
+int submit_task(ptl_thread_manager_t manager, ptl_task_t task);
 
 /**
  * Initiates an orderly shutdown in which previously submitted
@@ -98,7 +98,7 @@ int submit_task(ptl_thread_manger_t manager, ptl_task_t task);
  * down. Shutsdown the entire thread pool, manager, and signal handler.
  * 
  */
-void shutdown(ptl_thread_manger_t manager);
+void shutdown(ptl_thread_manager_t manager);
 
 /**
  * Attempts to stop all actively executing tasks, halts the
@@ -108,26 +108,26 @@ void shutdown(ptl_thread_manger_t manager);
  *
  * @return a list of tasks that never commenced execution
  */
-ptl_q_t shutdown_now(ptl_thread_manger_t manager);
+ptl_q_t shutdown_now(ptl_thread_manager_t manager);
 
 /**
  * Returns 1 if the thread manager is terminated.
  *
  * @return 1 if terminated, 0 otherwise
  */
-int is_terminated(ptl_thread_manger_t manager);
+int is_terminated(ptl_thread_manager_t manager);
 
 /**
  * Returns 1 if the thread manager is trying to terminate after shutdown.
  *
  * @return 1 if terminating, 0 otherwise
  */
-int is_terminating(ptl_thread_manger_t manager);
+int is_terminating(ptl_thread_manager_t manager);
 
 /**
  * Tries to remove from the work queue all tasks that have been cancelled.
  */
-void purge_cancelled(ptl_thread_manger_t manager);
+void purge_cancelled(ptl_thread_manager_t manager);
 
 
 

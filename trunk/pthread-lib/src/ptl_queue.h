@@ -98,7 +98,7 @@ struct ptl_q_funcs {
 };
 
 
-/* Typedefs */
+/* Type Definitions */
 typedef struct ptl_q* ptl_q_t;
 typedef struct ptl_q_funcs* ptl_q_funcs_t;
 typedef struct ptl_q_element* ptl_q_element_t;

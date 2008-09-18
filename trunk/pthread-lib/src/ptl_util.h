@@ -26,7 +26,7 @@
 
 /* Macro for easy free */
 #define FREE(x) {if(x) {free(x); x = NULL;}}
-
+/* get a line from a file */
 #define GET_LINE(file,line,line_size,str,val,delim,delim2,sp,val_ptr,str_ptr){ fgets(line,(line_size),file); str=strtok_r(line,delim,sp); if(!str){continue;} val=strtok_r(NULL, delim2, sp); str_ptr=strip_whitespace(str); val_ptr=strip_whitespace(val); }
 /* strcat that concatenates all the chars it can */
 #define STR_CAT(dest,src,max) { if((strlen(dest)+strlen(src)) < max){ strcat(dest,src);} else {strncat(dest,src,(max-(strlen(dest)+strlen(src))));} }
