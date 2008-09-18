@@ -3,9 +3,6 @@
 Maximized=1
 Geometry=1279x949+0+25
 
-[File Loader]
-Files=file:///home/nick/Projects/pthread-lib/src/ptl_array_queue.h#107%%%file:///home/nick/Projects/pthread-lib/src/ptl_linked_queue.h#16%%%file:///home/nick/Projects/pthread-lib/src/ptl_array_queue.c#34%%%file:///home/nick/Projects/pthread-lib/src/ptl_thread_manager.c#55%%%file:///home/nick/Projects/pthread-lib/src/ptl_thread_manager.h#67%%%file:///home/nick/Projects/pthread-lib/src/ptl_thread_pool.h#33%%%file:///home/nick/Projects/pthread-lib/src/ptl_queue.h#52%%%file:///home/nick/Projects/pthread-lib/src/ptl_task.h#29%%%file:///home/nick/Projects/pthread-lib/src/ptl_thread_pool.c#26
-
 [Execution]
 Program arguments=
 Run in terminal=1
