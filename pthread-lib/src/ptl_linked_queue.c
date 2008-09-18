@@ -17,7 +17,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
-/* See header file for documentation */
+/* See header file for documentation. */
 
 #include <pthread.h>
 #include <stdlib.h> 
