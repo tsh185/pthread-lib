@@ -37,13 +37,16 @@ void interrupt_idle_threads();
 void drain_queue();
 
 /* Function Bodies */
-ptl_thread_manger_t create_thread_manager(int core_pool_size, 
+
+
+/* Create a thread manager. Creates a thread pool as well */
+ptl_thread_manager_t create_thread_manager(int core_pool_size, 
 						   int max_pool_size, 
 						   long keep_alive_time,
 						   ptl_q_t work_q,
 						   void (*rejected_handler)(void *)){
 							   
-	ptl_thread_manger_t manager = (ptl_thread_manger_t)malloc(sizeof(struct ptl_thread_manager));
+	ptl_thread_manager_t manager = (ptl_thread_manager_t)calloc(1, sizeof(struct ptl_thread_manager));
 	assert(manager);
 	
 	/* create the thread pool */
@@ -53,22 +56,51 @@ ptl_thread_manger_t create_thread_manager(int core_pool_size,
 							   
 	/* initilize the manager struct */
 	manager->work_q = work_q;
-	manager->thread+pool = thread_pool;
-	manager->
-	manager->
-	manager->					   
-	manager->main_mutex = PTHREAD_MUTEX_INITIALIZER;
-	manager->termination_mutex = PTHREAD_COND_INITIALIZER;
+	manager->thread_pool = thread_pool;
+	manager->run_state = RUNNING;
+	/* functions */
+	manager->rejected_handler = rejected_handler;
+	manager->before_execute = NULL;
+	manager->after_execute = NULL;
+	
+	/* create mutexes and conditions */
+	pthread_mutex_t main_mutex = PTHREAD_MUTEX_INITIALIZER;
+  	pthread_cond_t  termination_mutex = PTHREAD_COND_INITIALIZER;
 							   
+	manager->main_mutex = main_mutex;
+	manager->termination_mutex = termination_mutex;
+						
+	return manager;						  							
 }
 
-ptl_thread_manger_t 
-	create_thread_manager_with_pool(ptl_thread_pool_t thread_pool
+
+
+/* create a thread manager, with a already defined thread pool */
+ptl_thread_manager_t 
+	create_thread_manager_with_pool(ptl_thread_pool_t thread_pool,
 						   			ptl_q_t work_q,
 						   			void* rejected_handler){
-//TODO:
-	return NULL;
-										   
+				
+	ptl_thread_manager_t manager = (ptl_thread_manager_t)calloc(1, sizeof(struct ptl_thread_manager));
+	assert(manager);
+							   					   
+	/* initilize the manager struct */
+	manager->work_q = work_q;
+	manager->thread_pool = thread_pool;
+	manager->run_state = RUNNING;
+	/* functions */
+	manager->rejected_handler = rejected_handler;
+	manager->before_execute = NULL;
+	manager->after_execute = NULL;
+	
+	/* create mutexes and conditions */
+	pthread_mutex_t main_mutex = PTHREAD_MUTEX_INITIALIZER;
+  	pthread_cond_t  termination_mutex = PTHREAD_COND_INITIALIZER;
+							   
+	manager->main_mutex = main_mutex;
+	manager->termination_mutex = termination_mutex;
+						
+	return manager;									   
 }
     /*
  struct ptl_thread_manager {
