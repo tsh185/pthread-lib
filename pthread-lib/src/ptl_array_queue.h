@@ -35,7 +35,7 @@
  * 
  * @param q the queue to destroy
  */
-void ptl_lq_destroy_queue(ptl_q_t q);
+void ptl_aq_destroy_queue(ptl_q_t q);
 
 /**
  * Initializes the queue, creating all memory needed to support this data
@@ -43,7 +43,7 @@ void ptl_lq_destroy_queue(ptl_q_t q);
  * 
  * @param q queue to be initized.
  */
-void ptl_lq_init_queue (ptl_q_t q);
+void ptl_aq_init_queue (ptl_q_t q);
 
 /**
  * Inserts the specified element into this queue. Returns true
@@ -54,7 +54,7 @@ void ptl_lq_init_queue (ptl_q_t q);
  * @param value the value to be stored in the queue
  * @return 1 if successful, 0 otherwise
  */
-int ptl_lq_add(ptl_q_t q, void *value);
+int ptl_aq_add(ptl_q_t q, void *value);
 
 /**
  * Tries to insert the item into the array queue. If there is not room, it will
@@ -67,7 +67,7 @@ int ptl_lq_add(ptl_q_t q, void *value);
  * @return 1 if successful, 0 otherwise
  * @see ptl_lq_add()
  **/
-int ptl_lq_add_wait(ptl_q_t q, void *value, long timeout);
+int ptl_aq_add_wait(ptl_q_t q, void *value, long timeout);
 
 /**
  * Removes all of the elements from this queue freeing memory as it iterates
@@ -78,7 +78,7 @@ int ptl_lq_add_wait(ptl_q_t q, void *value, long timeout);
  * @param q non-null queue to be cleared
  * @see ptl_lq_clear_freefunc()
  */
-void ptl_lq_clear(ptl_q_t q);
+void ptl_aq_clear(ptl_q_t q);
 
 /**
  * Removes all of the elements from this queue freeing memory as it iterates
@@ -90,7 +90,7 @@ void ptl_lq_clear(ptl_q_t q);
  * @param free_func function that will be used to free the 'value' elements
  * @see ptl_lq_clear()
  */
-void ptl_lq_clear_freefunc(ptl_q_t q, void (*free_func)(void *)); 
+void ptl_aq_clear_freefunc(ptl_q_t q, void (*free_func)(void *)); 
 
 /**
  * Retrieves, but does not remove, the head of this queue.
@@ -98,7 +98,7 @@ void ptl_lq_clear_freefunc(ptl_q_t q, void (*free_func)(void *));
  * @param q non-null queue to peek on
  * @return pointer to the head element or NULL if no element was found
  */
-void* ptl_lq_peek(ptl_q_t q);
+void* ptl_aq_peek(ptl_q_t q);
 
 /**
  * Retrieves and removes the head of this queue. It will return null if the 
@@ -107,7 +107,7 @@ void* ptl_lq_peek(ptl_q_t q);
  * @param q non-null queue to get an element from
  * @return the head element or NULL if no element was found
  */
-void* ptl_lq_get(ptl_q_t q);
+void* ptl_aq_get(ptl_q_t q);
 
 /**
  * Retrieves and removes the head of this queue, waiting up to the specified
@@ -122,7 +122,7 @@ void* ptl_lq_get(ptl_q_t q);
  * @param timeout time in seconds
  * @return the head element or NULL if no element was found
  */
-void* ptl_lq_get_wait(ptl_q_t q, long timeout);
+void* ptl_aq_get_wait(ptl_q_t q, long timeout);
 
 
 #endif

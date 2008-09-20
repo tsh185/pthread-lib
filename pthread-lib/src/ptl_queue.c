@@ -74,7 +74,68 @@ void ptl_q_destroy_queue(ptl_q_t q){
 	return;
 }
 
-// TODO: create add, add(index), remove, remove(index) functions
+
+/* add an element to the queue (calls supplied function) */
+int ptl_q_add(ptl_q_t q, void *value){
+	if(q == NULL) { return 0; }
+	
+	ptl_q_funcs_t funcs = (ptl_q_funcs_t)(q->functions);
+	
+	return funcs->ptl_q_add(q, value);
+}
+
+
+/* add an element to the queue (it may wait for it to have room)
+   (calls supplied function) */
+int ptl_q_add_wait(ptl_q_t q, void *value, long timeout){
+	if(q == NULL) { return 0; }
+	
+	ptl_q_funcs_t funcs = (ptl_q_funcs_t)(q->functions);
+	
+	return funcs->ptl_q_add_wait(q, value, timeout);
+}
+
+
+/* look, but don't remove, the first element */
+void* ptl_q_peek(ptl_q_t q){
+	if(q == NULL) { return NULL; }
+	
+	ptl_q_funcs_t funcs = (ptl_q_funcs_t)(q->functions);
+	
+	return funcs->ptl_q_peek(q);
+}
+
+
+/* get and remove the first element */
+void* ptl_q_get(ptl_q_t q){
+	if(q == NULL) { return NULL; }
+	
+	ptl_q_funcs_t funcs = (ptl_q_funcs_t)(q->functions);
+	
+	return funcs->ptl_q_get(q);
+}
+
+/* same as ptl_q_get, but it waits if an element is not in the queue */
+void* ptl_q_get_wait(ptl_q_t q, long timeout){
+	if(q == NULL) { return NULL; }
+	
+	ptl_q_funcs_t funcs = (ptl_q_funcs_t)(q->functions);
+	
+	return funcs->ptl_q_get_wait(q, timeout);
+}
+
+
+/* clears the queue of any elements */
+void ptl_q_clear(ptl_q_t q){
+	if(q == NULL) { return; }
+	
+	ptl_q_funcs_t funcs = (ptl_q_funcs_t)(q->functions);
+	
+	return funcs->ptl_q_clear(q);
+	
+	return;
+}
+
 
 /*
  * Checks to ensure all the function pointers are set.
