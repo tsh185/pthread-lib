@@ -34,18 +34,21 @@
 #include "ptl_util.h"
 
 /* Private Functions */
-void _check_capacity(ptl_array_list_t *array_list, int size);
-void _shift_elements(ptl_array_list_t *array_list, int index, int num_places);
+void _check_capacity(ptl_array_list_t array_list, int size);
+void _shift_elements(ptl_array_list_t array_list, int index, int num_places);
 
 /* creates the array list with an inital size of 10. */
-int ptl_al_create_array_list(ptl_array_list_t *array_list){
-	return ptl_al_create_array_list_size(array_list, 10);
+ptl_array_list_t ptl_al_create_array_list(){
+	return ptl_al_create_array_list_size(10);
 }
 
 
 /* creates the array list with an inital size of 'size'. */
-int ptl_al_create_array_list_size(ptl_array_list_t *array_list, int size){
-	if(array_list == NULL || size <= 0) { return 0; }
+ptl_array_list_t ptl_al_create_array_list_size(int size){
+	if(size <= 0) { return 0; }
+	
+	ptl_array_list_t array_list = (ptl_array_list_t)calloc(1, sizeof(struct ptl_array_list));
+	assert(array_list);
 	
 	// initialize 
 	array_list->capacity = size; // parameter 'size' is 'capacity' in this struct
@@ -57,12 +60,12 @@ int ptl_al_create_array_list_size(ptl_array_list_t *array_list, int size){
 	assert(array_list->array);
 	array_list->malloc_size = malloc_size; // store the 'real' size of this array
 	
-	return (array_list->array != NULL);
+	return array_list;
 }
 
 
 /* frees all memory allocated in create functions. */
-int ptl_al_destroy_array_list(ptl_array_list_t *array_list){
+int ptl_al_destroy_array_list(ptl_array_list_t array_list){
 	if(array_list == NULL) { return 0; }
 	   
 	array_list->capacity = 0;
@@ -75,15 +78,41 @@ int ptl_al_destroy_array_list(ptl_array_list_t *array_list){
 	return 1;
 }
 
+/* frees all memory allocated in create functions and executes the function
+   on each element in the list */
+int ptl_al_destroy_array_list_freefunc(ptl_array_list_t array_list, void (*free_func)(void *)){
+	if(array_list == NULL) { return 0; }
+	   
+	void **ptr = array_list->array;
+	void **i_ptr = NULL;
+	
+	array_list->capacity = 0;
+	array_list->size = 0;
+	array_list->malloc_size = 0;
+
+	// free each element
+	int i = 0;
+	for(i=0; i<array_list->size; i++){
+		i_ptr = ptr + i; // get to element 'i'
+		
+		free_func(*i_ptr); // free it using passed-in function
+	}
+	
+	
+	// free entire array
+	FREE(array_list->array);
+	
+	return 1;
+}
 
 /* if list if null or size is equal to zero. */
-int ptl_al_is_empty(ptl_array_list_t *array_list){
+int ptl_al_is_empty(ptl_array_list_t array_list){
 	return (array_list == NULL || array_list->size <= 0);	
 }
 
 
 /* appends the specified element to the end of this list. */
-int ptl_al_add(ptl_array_list_t *array_list, void *value){
+int ptl_al_add(ptl_array_list_t array_list, void *value){
 	if(array_list == NULL || value == NULL) { return 0; }
 	
 	// if we have room, then continue, otherwise this funciton will create room
@@ -92,7 +121,26 @@ int ptl_al_add(ptl_array_list_t *array_list, void *value){
 	// put the value in the list
 	void **ptr = array_list->array;
 	ptr += array_list->size; // move to our desired position (end of the list in this case)
-	*ptr = value; // we need to get to the ptr in the list, then assign our ptr there
+	
+	
+	int c_index = array_list->size - 1; // current index
+	// check if this space is occupied
+	if(*ptr != NULL) { // oops, something is here
+		
+		// go until we find an empty spot or until we reached the end
+		while(*ptr == NULL  &&  c_index < array_list->capacity){
+			c_index++;
+		}
+		
+		// check if we hit the end
+		if((c_index + 1) == array_list->capacity){
+			// we need to expand our list
+			_check_capacity (array_list, 1);
+		}
+	}
+	
+	// either we have room or we just made room, lets put or element in now
+	*((array_list->array) + c_index) = value; // we need to get to the ptr in the list, then assign our ptr there
 	
 	array_list->size++; // increase our size
 	
@@ -102,17 +150,22 @@ int ptl_al_add(ptl_array_list_t *array_list, void *value){
 
 
 /* adds, if an element is here, shifts all values to the right. */
-int ptl_al_add_index(ptl_array_list_t *array_list, void *value, int index){
+int ptl_al_add_index(ptl_array_list_t array_list, void *value, int index){
 	if(array_list == NULL || 
-	   index >= array_list->size || 
+	   index >= array_list->capacity || 
 	   index < 0){ 
 		   return 0; 
 	   }
 	
-	_check_capacity(array_list, 1);
+	_check_capacity(array_list, index + 1);
 	
-	// copy all elements to the right i.e. make some space (and we all rolled over...)
-	_shift_elements(array_list, index, 1);
+	void **ptr = (array_list->array) + index;
+	
+	// check if this 'index' is occupied
+	if(*ptr != NULL){
+		// copy all elements to the right i.e. make some space (and we all rolled over...)
+		_shift_elements(array_list, index, 1);
+	}
 	
 	
 	// reuse existing function
@@ -121,10 +174,10 @@ int ptl_al_add_index(ptl_array_list_t *array_list, void *value, int index){
 
 
 /* gets, and does NOT remove, the element at the 'index'. */
-void *ptl_al_get(ptl_array_list_t *array_list, int index){
+void *ptl_al_get(ptl_array_list_t array_list, int index){
 	if(array_list == NULL || 
 	   index < 0 || 
-	   index >= array_list->size) {
+	   index >= array_list->capacity) {
 		   return 0; 
 	   }
 	
@@ -134,12 +187,14 @@ void *ptl_al_get(ptl_array_list_t *array_list, int index){
 
 
 /* set the value at the 'index' position. */
-int ptl_al_set(ptl_array_list_t *array_list, void *value, int index){
-	if(array_list == NULL || 
-	   index < 0 || 
-	   index >= array_list->size) {
+int ptl_al_set(ptl_array_list_t array_list, void *value, int index){
+	if(array_list == NULL || index < 0) {
 		   return 0; 
    }
+	
+	if(index >= array_list->capacity){
+		_check_capacity (array_list, index + 1);
+	}
 	
 	void **ptr = array_list->array;
 	ptr += index; // move to our desired position ('index' in this case)
@@ -151,10 +206,10 @@ int ptl_al_set(ptl_array_list_t *array_list, void *value, int index){
 
 
 /* remove the element at index, shift elements left */
-void *ptl_al_remove_index(ptl_array_list_t *array_list, int index){
+void *ptl_al_remove_index(ptl_array_list_t array_list, int index){
 	if(array_list == NULL || 
 	   index < 0 || 
-	   index >= array_list->size) {
+	   index >= array_list->capacity) {
 		   return NULL; 
    }
 	
@@ -172,7 +227,7 @@ void *ptl_al_remove_index(ptl_array_list_t *array_list, int index){
 
 
 /* removes the element 'value' if found in the array */
-void *ptl_al_remove(ptl_array_list_t *array_list, void* value){
+void *ptl_al_remove(ptl_array_list_t array_list, void* value){
 	if(array_list == NULL || value == NULL) {
 		return NULL; 
 	}
@@ -186,28 +241,13 @@ void *ptl_al_remove(ptl_array_list_t *array_list, void* value){
 	if(index >= 0){
 		element = ptl_al_remove_index(array_list, index); // call existing function
 	}
-	
-	//~ int i = 0;
-	//~ for(i=0; i<array_list->size; i++){
-		//~ i_ptr = ptr + i; // get to element 'i'
 		
-		//~ // does this ptr's address match the ptr's address passed in?
-		//~ if(*i_ptr == value){ 
-			//~ break;
-	//~ }
-	
-	//~ // did we find the value?
-	//~ if(i < array_list->size){ // found the element
-		//~ element = ptl_al_remove_index(array_list, i); // call existing function
-	//~ }
-		
-	
 	return element;
 }
 
 
 /* sets all ptrs to null (does not free any memory) */
-void ptl_al_clear(ptl_array_list_t *array_list){
+void ptl_al_clear(ptl_array_list_t array_list){
 	if(array_list == NULL) { return; }
 	
 	// set all ptrs to NULL
@@ -216,14 +256,14 @@ void ptl_al_clear(ptl_array_list_t *array_list){
 
 
 /* go through array, return true if the element is in the array */
-int ptl_al_contains(ptl_array_list_t *array_list, void* value){
+int ptl_al_contains(ptl_array_list_t array_list, void* value){
 	
 	return (ptl_al_index_of(array_list, value) >= 0);
 }
 
 
 /* go through array, return the index of the element if the element is in the array */
-int ptl_al_index_of(ptl_array_list_t *array_list, void* value){
+int ptl_al_index_of(ptl_array_list_t array_list, void* value){
 	if(array_list == NULL || value == NULL) {
 		return 0; 
     }
@@ -249,14 +289,14 @@ int ptl_al_index_of(ptl_array_list_t *array_list, void* value){
 
 
 /* check if array needs to be expanded, if so, it expands it */
-void _check_capacity(ptl_array_list_t *array_list, int size){
+void _check_capacity(ptl_array_list_t array_list, int size){
 	assert(array_list);
-	assert(size > 0);
+	assert(size >= 0);
 	
 	if( (array_list->size + size) >= array_list->capacity ){ // make the array list bigger
 		
 		// calculate new capacity
-		int new_capacity = (array_list->capacity * 3)/2 + 1;
+		int new_capacity = ((array_list->capacity + size) * 3)/2 + 1;
 		
 		// allocate new memory
 		int malloc_size = new_capacity * (sizeof(void *)); 
@@ -280,7 +320,7 @@ void _check_capacity(ptl_array_list_t *array_list, int size){
 
 
 /* shifts the elements of the array left or right */
-void _shift_elements(ptl_array_list_t *array_list, int index, int num_places){
+void _shift_elements(ptl_array_list_t array_list, int index, int num_places){
 	assert(array_list);
 	assert(index >= 0);
 	assert(num_places != 0);

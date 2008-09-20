@@ -36,7 +36,8 @@ pthread_lib_SOURCES = \
 	test.h       \
 	test.c       \
 	ptl_array_queue.c       \
-	ptl_array_queue.h
+	ptl_array_queue.h       \
+	ptl_header.h
 
 pthread_lib_LDADD = \
 	-lpthread

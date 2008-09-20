@@ -17,12 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
+
 /**
  * This linked queue implementation is a simple FIFO queue with locking/blocking
  * operations for all get and put operations. A single lock is used to control
  * both get and put. Like all linked list implementations, capacity is not a 
  * concern.
  */
+
 
 #ifndef __PTL_LINKED_QUEUE_H__
 #define __PTL_LINKED_QUEUE_H__

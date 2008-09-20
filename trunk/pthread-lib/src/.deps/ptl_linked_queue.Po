@@ -15,7 +15,8 @@ ptl_linked_queue.o ptl_linked_queue.o: ptl_linked_queue.c \
   /usr/lib/gcc/i486-linux-gnu/4.2.3/include/stdarg.h \
   /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
   /usr/include/bits/stdio.h /usr/include/assert.h /usr/include/sys/time.h \
-  ptl_queue.h ptl_linked_queue.h ptl_util.h
+  /usr/include/string.h /usr/include/bits/string.h \
+  /usr/include/bits/string2.h ptl_queue.h ptl_linked_queue.h ptl_util.h
 
 /usr/include/pthread.h:
 
@@ -86,6 +87,12 @@ ptl_linked_queue.o ptl_linked_queue.o: ptl_linked_queue.c \
 /usr/include/assert.h:
 
 /usr/include/sys/time.h:
+
+/usr/include/string.h:
+
+/usr/include/bits/string.h:
+
+/usr/include/bits/string2.h:
 
 ptl_queue.h:
 
