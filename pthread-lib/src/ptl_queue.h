@@ -25,6 +25,9 @@
 #ifndef __PTL_QUEUE_H__
 #define __PTL_QUEUE_H__
 
+#define PTL_Q_TYPE_LENGTH 32
+
+
 /* A Single Queue Element */
 struct ptl_q_element {
 	void *value; // value of this element
@@ -34,11 +37,12 @@ struct ptl_q_element {
 	
 /* Essential Data Elements */
 struct ptl_q {
-	char *type; // string description of this queue (array, linked, etc.)
+	char type[PTL_Q_TYPE_LENGTH + 1]; // string description of this queue (array, linked, etc.)
 	long capacity; // total capacity (may be used to restrict size)
 	long size; // current size
 	struct ptl_q_element *head; // first element
 	struct ptl_q_element *tail; // last element
+	struct ptl_q_element *ptr; // misc ptr
 	void *functions;
 	/*struct ptl_q_funcs *functions;*/ // functions used to operate on the queue
  };
@@ -113,9 +117,11 @@ typedef struct ptl_q_element* ptl_q_element_t;
  *
  * @param q_functions list of functions that will be used to implement the 
  *                    operations
+ * @param capacity of this queue. If a linked queue, this is ignored. For an
+ *		  array queue, then this is the max size
  * @return new memory for this queue
  */
-ptl_q_t ptl_q_create_queue(ptl_q_funcs_t q_functions);
+ptl_q_t ptl_q_create_queue(ptl_q_funcs_t q_functions, int capacity);
 
 /**
  * Creates an element/node that houses the 'value' given to it. This element

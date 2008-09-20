@@ -25,6 +25,7 @@
 #include <assert.h>
 #include <time.h>
 #include <sys/time.h>
+#include <string.h>
 #include "ptl_queue.h"
 #include "ptl_linked_queue.h"
 #include "ptl_util.h"
@@ -36,8 +37,10 @@ pthread_mutex_t ptl_lq_mutex = PTHREAD_MUTEX_INITIALIZER;
 /* initialize memory needed for this type of queue. */
 void ptl_lq_init_queue (ptl_q_t q){
 	pthread_mutex_lock(&ptl_lq_mutex); // lock
-	
+
+	strncpy(q->type, "linked", PTL_Q_TYPE_LENGTH);
 	q->tail = q->head = ptl_q_create_element(NULL);
+	q->ptr = NULL; // not used
 	
 	pthread_mutex_unlock(&ptl_lq_mutex); // unlock
 }

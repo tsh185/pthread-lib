@@ -31,12 +31,13 @@ int _check_function_ptrs(ptl_q_funcs_t q_functions);
 
 
 /* create the queue and assign the functions */
-ptl_q_t ptl_q_create_queue(ptl_q_funcs_t q_functions){
+ptl_q_t ptl_q_create_queue(ptl_q_funcs_t q_functions, int capacity){
 	_check_function_ptrs(q_functions);
 	
 	ptl_q_t q = (ptl_q_t)malloc(sizeof(struct ptl_q));
 	assert(q);
 	
+	q->capacity = capacity;
 	q->functions = q_functions; // TODO is this right?
 	
 	ptl_q_funcs_t funcs = (ptl_q_funcs_t)(q->functions);

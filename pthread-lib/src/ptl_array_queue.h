@@ -17,11 +17,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
+
 /**
  * This "class" is an array implemention of a queue. It can be used with the
  * ptl_queue "interface" to have a finite, bounded set of work that can be
- * executed using the thread pool.
+ * executed using the thread pool. This queue uses simple locking/blocking
+ * operations for all get and put operations.
  */
+
 
 #ifndef __PTL_ARRAY_QUEUE_H__
 #define __PTL_ARRAY_QUEUE_H__
@@ -68,8 +71,9 @@ int ptl_lq_add_wait(ptl_q_t q, void *value, long timeout);
 
 /**
  * Removes all of the elements from this queue freeing memory as it iterates
- * through. Please note, it frees the 'values' put in the list under add. To
- * provide your own function, please use ptl_lq_clear_freefunc();
+ * through. Please note, it does not free the 'values' put in the list using add.
+ * To provide your own function to free the 'values', 
+ * please use ptl_lq_clear_freefunc().
  *
  * @param q non-null queue to be cleared
  * @see ptl_lq_clear_freefunc()
