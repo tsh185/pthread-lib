@@ -141,6 +141,66 @@ ptl_q_element_t ptl_q_create_element(void *value);
  */
 void ptl_q_destroy_queue(ptl_q_t q);
  
+/**
+ * Inserts the specified element into this queue if it is possible to do so 
+ * immediately without violating capacity restrictions, returning true 
+ * upon success and false if no space is currently available.
+ *
+ * @param queue to add the element
+ * @param value to add to the queue
+ * @return 1 if successful, 0 otherewise
+ */
+int ptl_q_add(ptl_q_t q, void *value);
+
+/**
+ * Inserts the specified element at the tail of this queue, waiting if
+ * necessary up to the specified wait time for space to become available.
+ *
+ * @param queue to add the element
+ * @param value to add to the queue
+ * @param timeout number of milliseconds to wait for the add to be successful
+ * @return 1 if add is successful, 0 otherwise
+ */
+int ptl_q_add_wait(ptl_q_t q, void *value, long timeout);
+
+/**
+ * Retrieves, but does not remove, the head of this queue.
+ * This function is read-only and therefore does not block.
+ *
+ * @param queue to peek at the first element
+ * @return the element at the head of the queue
+ */
+void* ptl_q_peek(ptl_q_t q);
+
+/**
+ * Retrieves and removes the head of this queue. It will block until an
+ * element is available. 
+ * This function will block once it enters the function mutex.
+ *
+ * @param queue to get the first element
+ * @return the element at the head of the queue if successful, null otherwise
+ */
+void* ptl_q_get(ptl_q_t q);
+
+/**
+ * Retrieves and removes the head of this queue, waiting up to the specified
+ * wait time if necessary for an element to become available.
+ * This function will block once it enters the function mutex.
+ *
+ * @param queue to get the first element
+ * @param timeout number of milliseconds to wait for the get to be successful
+ * @return the element at the head of the queue if successful, null otherwise
+ */
+void* ptl_q_get_wait(ptl_q_t q, long timeout);
+
+/**
+ * Removes all of the elements from this queue.
+ * It will block all operations until it is finished.
+ *
+ * @param queue to clear
+ */
+void ptl_q_clear(ptl_q_t q);
+
 
  
 #endif
