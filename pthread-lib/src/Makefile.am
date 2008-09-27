@@ -33,8 +33,6 @@ pthread_lib_SOURCES = \
 	ptl_array_list.h       \
 	ptl_task.c       \
 	ptl_task.h       \
-	test.h       \
-	test.c       \
 	ptl_array_queue.c       \
 	ptl_array_queue.h       \
 	ptl_header.h

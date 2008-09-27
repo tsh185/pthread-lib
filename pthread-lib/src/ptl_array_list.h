@@ -28,7 +28,7 @@
 #ifndef __PTL_ARRAY_LIST_H__
 #define __PTL_ARRAY_LIST_H__
 
-
+/* Structures */
 struct ptl_array_list {
 	int capacity; 		/**< largest current size */
 	int size;	  		/**< current size */
@@ -36,7 +36,11 @@ struct ptl_array_list {
 	void **array;  		/**< array of pointers - elements in the array */
 };
 
+/* Type Definitions */
 typedef struct ptl_array_list *ptl_array_list_t;
+
+
+/* Public Functions */
 
 /**
  * Creates an array list with a starting size of 10.

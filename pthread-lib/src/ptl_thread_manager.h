@@ -24,11 +24,12 @@
 #include "ptl_thread_pool.h"
 #include "ptl_task.h"
 
+/* Constants */
+#define PTL_RUNNING    0;
+#define PTL_SHUTDOWN   1;
+#define PTL_STOP       2;
+#define PTL_TERMINATED 3;
 
-#define RUNNING    0;
-#define SHUTDOWN   1;
-#define STOP       2;
-#define TERMINATED 3;
 
 /* Structures */
 
@@ -52,7 +53,7 @@ typedef struct ptl_thread_manager_state *ptl_thread_manager_state_t;
 typedef struct ptl_thread_manager *ptl_thread_manager_t;
 
 
-/* Methods */
+/* Public Functions */
 
 /**
  * Create and initilize the thread pool manager.
