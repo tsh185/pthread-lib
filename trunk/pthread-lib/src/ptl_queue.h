@@ -27,6 +27,7 @@
 
 #define PTL_Q_TYPE_LENGTH 32
 
+/* Structures */
 
 /* A Single Queue Element */
 struct ptl_q_element {

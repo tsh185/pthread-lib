@@ -57,7 +57,7 @@ ptl_thread_manager_t create_thread_manager(int core_pool_size,
 	/* initilize the manager struct */
 	manager->work_q = work_q;
 	manager->thread_pool = thread_pool;
-	manager->run_state = RUNNING;
+	manager->run_state = PTL_RUNNING;
 	/* functions */
 	manager->rejected_handler = rejected_handler;
 	manager->before_execute = NULL;
@@ -87,7 +87,7 @@ ptl_thread_manager_t
 	/* initilize the manager struct */
 	manager->work_q = work_q;
 	manager->thread_pool = thread_pool;
-	manager->run_state = RUNNING;
+	manager->run_state = PTL_RUNNING;
 	/* functions */
 	manager->rejected_handler = rejected_handler;
 	manager->before_execute = NULL;

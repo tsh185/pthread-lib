@@ -17,42 +17,58 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
  
+/*
+ * This "class" is a thread dedicated to handling signals. When multithreading,
+ * one does not know which thread will catch a signal. Using these functions
+ * one is able to block all the signals from the threads (think lineman and
+ * quaterback)and handle all the signals sent to the running process. 
+ * It is made flexible by allowing one to execute user-defined functions for 
+ * a wide array of signals.
+ */
 
 #ifndef __PTL_SIGNAL_MANAGER_H__
 #define __PTL_SIGNAL_MANAGER_H__
 
 /* Defines */
-#define SIGNAL_HANDLER_DESTROY_SIGNAL SIGQUIT
+#define PTL_SIGNAL_HANDLER_DESTROY_SIGNAL SIGTERM
 
-/* Structs */
-struct ptl_sh_funcs {
-  void *(*hup_func_ptr)();  /**< 1    Exit    Hangup                           */
-  void *(*int_func_ptr)();  /**< 2    Exit    Interrupt                        */
-  void *(*alarm_func_ptr)();/**< 14   Exit    Alarm Clock                      */
-  void *(*term_func_ptr)(); /**< 15   Exit    Terminated                       */
-  void *(*user1_func_ptr)();/**< 16   Ignore  User Signal 1                    */
-  void *(*user2_func_ptr)();/**< 17   Ignore  User Signal 2                    */
-  void *(*child_func_ptr)();/**< 18   Ignore  Child status                     */
-  void *(*cont_func_ptr)(); /**< 25   Ignore  Continued                        */
-  void *(*wait_func_ptr)(); /**< 32   Ignore  All LWPs Blocked                 */
-  void *(*lwp_func_ptr)();  /**< 33   Ignore  Virtual Interprocessor Interrupt */
-                            /*                for threads library              */
-  void *(*aio_func_ptr)();  /**< 34   Ignore  Asynchronous I/O                 */
+/* Structures */
+struct ptl_smgr_funcs {
+	void *(*hup_func_ptr)();  /**< 1    Hangup (POSIX).                       */
+	void *(*int_func_ptr)();  /**< 2    Interrupt (ANSI)                      */
+	void *(*quit_func_ptr)(); /**< 3    Quit (POSIX)                          */
+	void *(*abort_func_ptr)();/**< 6   Abort (ANSI)                           */
+	void *(*user1_func_ptr)();/**< 10   User-defined signal 1 (POSIX)         */
+	void *(*user2_func_ptr)();/**< 12   User-defined signal 2 (POSIX)         */
+	void *(*alarm_func_ptr)();/**< 14   Alarm clock (POSIX)                   */
+	void *(*term_func_ptr)(); /**< 15   Termination (ANSI)                    */
+	void *(*child_func_ptr)();/**< 17   Child status has changed (POSIX)      */
+	void *(*cont_func_ptr)(); /**< 28   Continue (POSIX)                      */
 };
 
-/* Typedefs */
-typedef struct ptl_sh_funcs* ptl_sh_funcs_t;
+struct ptl_signal_manager {
+	struct ptl_smgr_funcs* func_ptrs;
+	pthread_t smgr_thread;
+	int running;
+};
+
+/* Type Definitions */
+typedef struct ptl_smgr_funcs* ptl_smgr_funcs_t;
+typedef struct ptl_signal_manager* ptl_signal_manager_t;
+
+
+/* Public Functions */
 
 /**
  * Creates a single thread to handle all interrupt signals.
  * The function pointer that correlated with each signal will be executed
  * when that signal is encountered.  If a ptr is null, nothing happens.
  *
- * @param sig_mgr a non-null pthread_t that will be populated in this function
+ *
  * @param func_ptrs set of functions to be executed for various signals
- * @return 1 if create was successful, 0 otherwise
+ * @return a new signal manager
  */
-int ptl_signal_handler_create(pthread_t sig_mgr, ptl_sh_funcs_t func_ptrs);
+ptl_signal_manager_t ptl_signal_handler_create(ptl_smgr_funcs_t func_ptrs);
 
 /**
  * Stops the thread manager by setting a flag and sending a signal.
@@ -64,7 +80,7 @@ int ptl_signal_handler_create(pthread_t sig_mgr, ptl_sh_funcs_t func_ptrs);
  *
  * @param sig_mgr the created signal manager
  */
-void stop_signal_manager(pthread_t sig_mgr);
+void stop_signal_manager(ptl_signal_manager_t sig_mgr);
 
 /**
  * Synchronizes the signal handler and frees the memory.
@@ -72,7 +88,7 @@ void stop_signal_manager(pthread_t sig_mgr);
  *
  * @param sig_mgr the created signal manager
  */
-int destroy_signal_manager(pthread_t sig_mgr);
+int destroy_signal_manager(ptl_signal_manager_t sig_mgr);
 
 /**
  * Blocks all signal for the thread calling this function.

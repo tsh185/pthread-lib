@@ -23,6 +23,7 @@
 #include <time.h>
 #include <sys/time.h>
 
+/* Macros */
 
 /* Macro for easy free */
 #define FREE(x) {if(x) {free(x); x = NULL;}}
@@ -43,6 +44,9 @@
         (tv)->tv_sec = (ts)->tv_sec;                                    \
         (tv)->tv_usec = (ts)->tv_nsec / 1000;                           \
 }
+
+
+/* Public Functions */
 
 /**
  * Wait wait_usec microseconds. A local mutex and cond is created to call the
