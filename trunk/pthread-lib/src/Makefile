@@ -49,7 +49,7 @@ am_pthread_lib_OBJECTS = main.$(OBJEXT) ptl_linked_queue.$(OBJEXT) \
 	ptl_queue.$(OBJEXT) ptl_linked_queue_test.$(OBJEXT) \
 	ptl_util.$(OBJEXT) ptl_signal_manager.$(OBJEXT) \
 	ptl_thread_manager.$(OBJEXT) ptl_thread_pool.$(OBJEXT) \
-	ptl_array_list.$(OBJEXT) ptl_task.$(OBJEXT) test.$(OBJEXT) \
+	ptl_array_list.$(OBJEXT) ptl_task.$(OBJEXT) \
 	ptl_array_queue.$(OBJEXT)
 pthread_lib_OBJECTS = $(am_pthread_lib_OBJECTS)
 pthread_lib_DEPENDENCIES =
@@ -260,8 +260,6 @@ pthread_lib_SOURCES = \
 	ptl_array_list.h       \
 	ptl_task.c       \
 	ptl_task.h       \
-	test.h       \
-	test.c       \
 	ptl_array_queue.c       \
 	ptl_array_queue.h       \
 	ptl_header.h
@@ -354,7 +352,6 @@ include ./$(DEPDIR)/ptl_task.Po
 include ./$(DEPDIR)/ptl_thread_manager.Po
 include ./$(DEPDIR)/ptl_thread_pool.Po
 include ./$(DEPDIR)/ptl_util.Po
-include ./$(DEPDIR)/test.Po
 
 .c.o:
 	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

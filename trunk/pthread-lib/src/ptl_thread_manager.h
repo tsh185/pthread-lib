@@ -25,10 +25,32 @@
 #include "ptl_task.h"
 
 /* Constants */
-#define PTL_RUNNING    0;
-#define PTL_SHUTDOWN   1;
-#define PTL_STOP       2;
-#define PTL_TERMINATED 3;
+/**
+ * runState provides the main lifecyle control, taking on values:
+ *
+ *   RUNNING:  Accept new tasks and process queued tasks
+ *   SHUTDOWN: Don't accept new tasks, but process queued tasks
+ *   STOP:     Don't accept new tasks, don't process queued tasks,
+ *             and interrupt in-progress tasks
+ *   TERMINATED: Same as STOP, plus all threads have terminated
+ *
+ * The numerical order among these values matters, to allow
+ * ordered comparisons. The runState monotonically increases over
+ * time, but need not hit each state. The transitions are:
+ *
+ * RUNNING -> SHUTDOWN
+ *    On invocation of shutdown(), perhaps implicitly in finalize()
+ * (RUNNING or SHUTDOWN) -> STOP
+ *    On invocation of shutdownNow()
+ * SHUTDOWN -> TERMINATED
+ *    When both queue and pool are empty
+ * STOP -> TERMINATED
+ *    When pool is empty
+ */
+#define PTL_RUNNING    0
+#define PTL_SHUTDOWN   1
+#define PTL_STOP       2
+#define PTL_TERMINATED 3
 
 
 /* Structures */
@@ -40,6 +62,7 @@ struct ptl_thread_manager {
 	pthread_mutex_t main_mutex; 		/**< Lock held on updates to pool_size, 
 	 							     		 core_pool_size,max_pool_size, run_state, 
 	 								 		 and workers set. */
+	int num_completed_tasks;			/**< number of completed tasks. */
 	pthread_cond_t termination_mutex;	/**< wait condition to support termination */
 	ptl_thread_pool_t thread_pool;
 	void (*before_execute)(void *);	  	/**< executes before function pointer */
@@ -55,13 +78,29 @@ typedef struct ptl_thread_manager *ptl_thread_manager_t;
 
 /* Public Functions */
 
+
 /**
  * Create and initilize the thread pool manager.
  * This will create the pool of threads and put it in the RUNNING state.
- * After this function is execute, the manager is ready to accept tasks.
+ * After this function is executed, the manager is ready to accept tasks.
+ * The before and after functions are execute...before and after the 
+ * task is executed.
  * 
  */
-ptl_thread_manager_t creatptl_thread_manager_te_thread_manager(int core_pool_size, 
+ptl_thread_manager_t create_thread_manager_with_functions(int core_pool_size, 
+						   int max_pool_size, 
+						   long keep_alive_time,
+						   ptl_q_t work_q,
+						   void (*rejected_handler)(void *),
+						   void (*before_execute)(void *),
+						   void (*after_execute)(void *));
+/**
+ * Create and initilize the thread pool manager.
+ * This will create the pool of threads and put it in the RUNNING state.
+ * After this function is executed, the manager is ready to accept tasks.
+ * 
+ */
+ptl_thread_manager_t create_thread_manager(int core_pool_size, 
 						   				  int max_pool_size, 
 						   				  long keep_alive_time,
 						   				  ptl_q_t work_q,
@@ -69,12 +108,12 @@ ptl_thread_manager_t creatptl_thread_manager_te_thread_manager(int core_pool_siz
 /**
  * Create and initilize the thread pool manager.
  * This will create the pool of threads and put it in the RUNNING state.
- * After this function is execute, the manager is ready to accept tasks.
+ * After this function is executed, the manager is ready to accept tasks.
  */
 ptl_thread_manager_t 
 	create_thread_manager_with_pool(ptl_thread_pool_t thread_pool,
 						   			ptl_q_t work_q,
-						   			void* rejected_handler);
+						   			void (*rejected_handler) (void *));
 
 /**
  * Submits the function pointer to the queue that is being watched by 
@@ -82,7 +121,7 @@ ptl_thread_manager_t
  *
  * @return 1 if successful, 0 otherwise
  */
-int submit(ptl_thread_manager_t manager, void* function_to_execute);
+int submit(ptl_thread_manager_t manager, void (*function_to_execute)(void *));
 
 /**
  * Submits the task (ptl_task_t) to the queue that is being watched by the

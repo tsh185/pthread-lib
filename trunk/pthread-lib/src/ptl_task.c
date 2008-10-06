@@ -17,6 +17,32 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor Boston, MA 02110-1301,  USA
  */
 
+
+#include <pthread.h>
+#include <stdio.h>
+#include <assert.h>
+#include <malloc.h>
+#include <assert.h>
+#include <string.h>
 #include "ptl_task.h"
+#include "ptl_util.h"
 
+/* create a task in dynamic memory */
+ptl_task_t create_task(void (*function_to_execute)(void*)){
+	if(function_to_execute == NULL) { return NULL; }
+	
+	ptl_task_t task = (ptl_task_t)calloc(1, sizeof(struct ptl_task));
+	assert(task);
+	
+	task->function_to_execute = function_to_execute;
+	task->state = PTL_TASK_STATE_CREATED;
+	
+	return task;
+}
 
+/* destroy memory for a task. Does not destroy any memory it's pointing to */
+void destroy_task(ptl_task_t task){
+	if(task == NULL) { return; }
+	   
+	FREE(task);
+}
