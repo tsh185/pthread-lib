@@ -42,9 +42,5 @@ ptl_thread_pool_t ptl_create_thread_pool(int core_pool_size,
 										 int max_pool_size,
 										 long keep_alive_time);
 
-/**
- * Creates the memory for the core_pool_size of threads (pthread_t).
- */
-void start_core_threads(ptl_thread_pool_t thread_pool);
 
 #endif

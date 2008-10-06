@@ -20,6 +20,14 @@
 #ifndef __PTL_TASK_H__
 #define __PTL_TASK_H__
 
+
+#define PTL_TASK_STATE_CREATED 0
+#define PTL_TASK_STATE_RUNNING 1
+#define PTL_TASK_STATE_DONE 2
+#define PTL_TASK_STATE_CANCELLED 3
+#define PTL_TASK_STATE_REJECTED 4
+
+
 struct ptl_task {
 	int state;
 	void* (*function_to_execute)(void*); 
@@ -27,4 +35,22 @@ struct ptl_task {
 
 
 typedef struct ptl_task *ptl_task_t;
+
+/* Public Functions */
+
+/**
+ * Create a task that contains a state.
+ *
+ * @param function that will be executed when this task is consumed
+ * @return a non-null 'task'
+ */
+ptl_task_t create_task(void (*function_to_execute)(void*));
+
+/**
+ * Destroy a 'task'. This does not free any memory this 'task' may be pointing
+ * to. It only frees the memory create during the 'create' function.
+ *
+ * @param task task to be destroyed
+ */
+void destroy_task(ptl_task_t task);
 #endif

@@ -82,6 +82,19 @@ int destroy_signal_manager(ptl_signal_manager_t sig_mgr){
 	return (status == 0);
 }
 
+/* Blocks all signal for the thread calling this function */
+int block_all_signals(){
+
+	sigset_t signals;
+	sigfillset(&signals);
+
+	int sigmask_rc = pthread_sigmask(SIG_BLOCK, &signals, NULL);
+	return (sigmask_rc == 0);
+}
+
+
+
+/* Private Functions */
 
 /**
  * The function the signal handler executes when a signal is sent to this 
@@ -172,15 +185,4 @@ void *_ptl_signal_handler_function(void *sig_mgr){
 	pthread_exit(NULL);
 	
 	return NULL;
-}
-
-
-/* Blocks all signal for the thread calling this function */
-int block_all_signals(){
-
-	sigset_t signals;
-	sigfillset(&signals);
-
-	int sigmask_rc = pthread_sigmask(SIG_BLOCK, &signals, NULL);
-	return (sigmask_rc == 0);
 }

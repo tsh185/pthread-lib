@@ -19,6 +19,8 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <assert.h>
+
 #include "ptl_thread_pool.h"
 
 
@@ -39,23 +41,7 @@ ptl_thread_pool_t ptl_create_thread_pool(int core_pool_size,
 	thread_pool->completed_tasks = 0;
 											 
 	/* create memory enough for max_pool_threads */
-	thread_pool->threads = (pthread_t *)malloc(sizeof(pthread_t * max_pool_size));
-}
-
-
-/* creates and starts the core threads */
-void start_core_threads(ptl_thread_pool_t thread_pool){
-	if(thread_pool == NULL){ return;}
-	
-	pthread_t *thread = NULL;
-	
-	int i=0;
-	for(i=0; i < thread_pool->core_pool_size; i++){
-		thread = (pthread_t *)malloc(sizeof(pthread_t));
-		assert(thread);
-		
-		thread_pool->threads[i] = thread;
-	}
+	thread_pool->threads = (pthread_t *)malloc(sizeof(pthread_t) * max_pool_size);
 }
 											 
 										
